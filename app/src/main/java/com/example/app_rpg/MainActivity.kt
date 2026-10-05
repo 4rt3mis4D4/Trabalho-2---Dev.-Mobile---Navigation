@@ -65,8 +65,18 @@ enum class Destination(
 
 private val telasInternasLojas = setOf(Destination.StoreRegistration, Destination.Store)
 
+enum class Mode(
+    val label: String,
+    val tabs: List<Destination>
+) {
+    Player("Jogador", listOf(Destination.Dice, Destination.CharacterSheet, Destination.StoreList)),
+    Master("Mestre", listOf(Destination.Playlist, Destination.Items, Destination.StoreList))
+}
+
 @Composable
 fun App() {
+    var user by rememberSaveable { mutableStateOf(User()) }
+    val mode = user.mode
     var current by rememberSaveable { mutableStateOf(Destination.Dice) }
     val lojas = remember {
         mutableStateListOf<LojaRpg>()
@@ -99,10 +109,7 @@ fun App() {
         containerColor = corPretoPuro,
         bottomBar = {
             NavigationBar(containerColor = corCinzaEscuro) {
-                Destination.entries
-                    .filter {
-                        it !in telasInternasLojas
-                    }
+                mode.tabs
                     .forEach { destination ->
                         NavigationBarItem(
                             selected = current == destination ||
@@ -131,18 +138,53 @@ fun App() {
                                     selectedIconColor = corBrancoPuro,
                                     selectedTextColor = corBrancoPuro,
 
-                                    indicatorColor = when(destination){
-                                        Destination.Playlist,
-                                        Destination.Items ->
-                                            corMestreDestaque
-                                        else ->
-                                            corJogadorPrincipal
+                                    indicatorColor = when (mode) {
+                                        Mode.Master -> corMestreDestaque
+                                        Mode.Player -> corJogadorPrincipal
                                 },
                                 unselectedIconColor = corCinzaMedio,
                                 unselectedTextColor = corCinzaMedio,
                             )
                     )
                 }
+
+                //Toggles between Player and Master mode
+                val modeColor = when (mode) {
+                    Mode.Master -> corMestreDestaque
+                    Mode.Player -> corJogadorPrincipal
+                }
+                NavigationBarItem(
+                    selected = false,
+                    onClick = {
+                        val newMode = when (mode) {
+                            Mode.Player -> Mode.Master
+                            Mode.Master -> Mode.Player
+                        }
+                        user = user.copy(mode = newMode)
+                        if (current !in newMode.tabs && current !in telasInternasLojas) {
+                            current = newMode.tabs.first()
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_swap),
+                            contentDescription = "Alternar para modo ${
+                                if (mode == Mode.Player) Mode.Master.label else Mode.Player.label
+                            }"
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = mode.label,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        unselectedIconColor = modeColor,
+                        unselectedTextColor = modeColor,
+                    )
+                )
         }
     }
 ) { innerPadding ->
@@ -161,6 +203,7 @@ fun App() {
             Destination.StoreList -> StoreListScreen(
                 modifier = contentModifier,
                 lojas = lojas,
+                isMaster = mode == Mode.Master,
                 onLojaClick = { loja ->
                     nomeLoja = loja.nome
                     current = Destination.Store
@@ -175,6 +218,12 @@ fun App() {
                 },
                 onExcluir = { loja ->
                     lojas.removeAll { it.id == loja.id }
+                },
+                onToggleVisibility = { loja ->
+                    val indice = lojas.indexOfFirst { it.id == loja.id }
+                    if (indice >= 0) {
+                        lojas[indice] = loja.copy(visivel = !loja.visivel)
+                    }
                 }
             )
 

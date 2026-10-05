@@ -3,6 +3,7 @@ package com.example.app_rpg
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,12 +59,17 @@ import com.example.app_rpg.ui.theme.corPretoPuro
 fun StoreListScreen(
     modifier: Modifier = Modifier,
     lojas: List<LojaRpg>,
+    //Master manages the stores; players only see the visible ones
+    isMaster: Boolean = true,
     onLojaClick: (LojaRpg) -> Unit = {},
     onAdicionar: () -> Unit = {},
     onEditar: (LojaRpg) -> Unit = {},
-    onExcluir: (LojaRpg) -> Unit = {}
+    onExcluir: (LojaRpg) -> Unit = {},
+    onToggleVisibility: (LojaRpg) -> Unit = {}
 ) {
     val context = LocalContext.current
+
+    val displayedStores = if (isMaster) lojas else lojas.filter { it.visivel }
 
     //Loja aguardando confirmação de exclusão
     var lojaParaExcluir by remember {
@@ -78,7 +84,7 @@ fun StoreListScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             CabecalhoLojas()
 
-            if (lojas.isEmpty()) {
+            if (displayedStores.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -87,7 +93,11 @@ fun StoreListScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Nenhuma loja cadastrada ainda.\nToque em + para criar uma loja.",
+                        text = if (isMaster) {
+                            "Nenhuma loja cadastrada ainda.\nToque em + para criar uma loja."
+                        } else {
+                            "Nenhuma loja disponível no momento."
+                        },
                         color = corCinzaMedio,
                         fontSize = 16.sp,
                         textAlign = TextAlign.Center
@@ -105,31 +115,35 @@ fun StoreListScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    items(lojas, key = { it.id }) { loja ->
+                    items(displayedStores, key = { it.id }) { loja ->
                         LojaCard(
                             loja = loja,
+                            isMaster = isMaster,
                             onClick = { onLojaClick(loja) },
                             onEditar = { onEditar(loja) },
-                            onExcluir = { lojaParaExcluir = loja }
+                            onExcluir = { lojaParaExcluir = loja },
+                            onToggleVisibility = { onToggleVisibility(loja) }
                         )
                     }
                 }
             }
         }
 
-        FloatingActionButton(
-            onClick = onAdicionar,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(20.dp),
-            shape = CircleShape,
-            containerColor = corMestreDestaque,
-            contentColor = corBrancoPuro
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.icon_add),
-                contentDescription = "Criar loja"
-            )
+        if (isMaster) {
+            FloatingActionButton(
+                onClick = onAdicionar,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(20.dp),
+                shape = CircleShape,
+                containerColor = corMestreDestaque,
+                contentColor = corBrancoPuro
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.icon_add),
+                    contentDescription = "Criar loja"
+                )
+            }
         }
     }
 
@@ -196,9 +210,11 @@ private fun CabecalhoLojas() {
 @Composable
 private fun LojaCard(
     loja: LojaRpg,
+    isMaster: Boolean,
     onClick: () -> Unit,
     onEditar: () -> Unit,
-    onExcluir: () -> Unit
+    onExcluir: () -> Unit,
+    onToggleVisibility: () -> Unit
 ) {
     Card(
         onClick = onClick,
@@ -212,7 +228,11 @@ private fun LojaCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            AvatarLoja(visivel = loja.visivel)
+            AvatarLoja(
+                visivel = loja.visivel,
+                //Only the master can hide/show the store by tapping the image
+                onClick = if (isMaster) onToggleVisibility else null
+            )
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -244,7 +264,7 @@ private fun LojaCard(
                 )
             }
 
-            Column(
+            if (isMaster) Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilledIconButton(
@@ -282,12 +302,22 @@ private fun LojaCard(
 }
 
 @Composable
-private fun AvatarLoja(visivel: Boolean) {
+private fun AvatarLoja(visivel: Boolean, onClick: (() -> Unit)? = null) {
     Box(
         modifier = Modifier
             .size(72.dp)
             .clip(CircleShape)
-            .background(if (visivel) corMestrePrincipal else corCinzaEscuro),
+            .background(if (visivel) corMestrePrincipal else corCinzaEscuro)
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(
+                        onClickLabel = if (visivel) "Ocultar dos jogadores" else "Mostrar aos jogadores",
+                        onClick = onClick
+                    )
+                } else {
+                    Modifier
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         Icon(
