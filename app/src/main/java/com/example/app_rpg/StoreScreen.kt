@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.example.app_rpg.ui.theme.LocalModePalette
 import com.example.app_rpg.ui.theme.corBrancoOffWhite
 import com.example.app_rpg.ui.theme.corBrancoPuro
+import com.example.app_rpg.ui.theme.corCinzaEscuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
 import com.example.app_rpg.ui.theme.corPretoPuro
 
@@ -44,10 +45,11 @@ private const val MESSAGE_BUY = "Compra efetuada com sucesso!"
 @Composable
 fun StoreScreen(
     modifier: Modifier = Modifier,
+    descricao: String = "",
     itens: List<ItemRpg>,
-    onItemClick: (ItemRpg) -> Unit = {
-        // TODO: Implementar navegação tela lista de lojas para lista de itens salvos na loja
-    }
+    isMaster: Boolean = false,
+    onItemClick: (ItemRpg) -> Unit = {},
+    onRemoveItem: (ItemRpg) -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -64,7 +66,11 @@ fun StoreScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Nenhum item na loja ainda.\nCadastre um item para ele aparecer aqui.",
+                    text = if (isMaster) {
+                        "Nenhum item na loja ainda.\nEdite a loja para escolher os itens à venda."
+                    } else {
+                        "Esta loja não tem itens à venda."
+                    },
                     color = corCinzaMedio,
                     fontSize = 16.sp,
                     textAlign = TextAlign.Center
@@ -76,12 +82,28 @@ fun StoreScreen(
                 contentPadding = PaddingValues(20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                if (descricao.isNotBlank()) {
+                    item {
+                        Text(
+                            text = descricao,
+                            color = corBrancoOffWhite,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+
                 items(itens, key = { it.id }) { item ->
                     ItemCard(
                         item = item,
+                        isMaster = isMaster,
                         onClick = { onItemClick(item) },
-                        onComprar = {
-                            Toast.makeText(context, MESSAGE_BUY, Toast.LENGTH_SHORT).show()
+                        onAction = {
+                            if (isMaster) {
+                                onRemoveItem(item)
+                                Toast.makeText(context, "${item.itemName} removido da loja", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, MESSAGE_BUY, Toast.LENGTH_SHORT).show()
+                            }
                         }
                     )
                 }
@@ -93,8 +115,9 @@ fun StoreScreen(
 @Composable
 private fun ItemCard(
     item: ItemRpg,
+    isMaster: Boolean,
     onClick: () -> Unit,
-    onComprar: () -> Unit
+    onAction: () -> Unit
 ) {
     val palette = LocalModePalette.current
     
@@ -178,16 +201,16 @@ private fun ItemCard(
             }
 
             FilledIconButton(
-                onClick = onComprar,
+                onClick = onAction,
                 colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = palette.accent,
-                    contentColor = corBrancoPuro
+                    containerColor = if (isMaster) corCinzaEscuro else palette.accent,
+                    contentColor = if (isMaster) palette.accent else corBrancoPuro
                 )
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.icon_coins),
-                    contentDescription = "Comprar ${item.itemName}",
-                    modifier = Modifier.size(28.dp)
+                    painter = painterResource(if (isMaster) R.drawable.icon_delete else R.drawable.icon_coins),
+                    contentDescription = if (isMaster) "Remover ${item.itemName} da loja" else "Comprar ${item.itemName}",
+                    modifier = Modifier.size(if (isMaster) 22.dp else 28.dp)
                 )
             }
         }

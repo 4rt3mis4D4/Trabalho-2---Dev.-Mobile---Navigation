@@ -138,6 +138,7 @@ fun App() {
 
     val routeStoreId = backStackEntry?.arguments?.getInt(Routes.STORE_ID_ARG)
     val routeStore = lojas.firstOrNull { it.id == routeStoreId }
+    val storeItems = itens.filter { routeStore != null && it.id in routeStore.itemIds }
     val routeItemId = backStackEntry?.arguments?.getInt(Routes.ITEM_ID_ARG)
     val routeItem = itens.firstOrNull { it.id == routeItemId }
     val tab = Destination.entries.firstOrNull { it.route == currentRoute }
@@ -157,7 +158,7 @@ fun App() {
                         else -> tab?.label.orEmpty()
                     },
                     subtitle = if (currentRoute == Routes.STORE) {
-                        if (itens.size == 1) "1 item à venda" else "${itens.size} itens à venda"
+                        if (storeItems.size == 1) "1 item à venda" else "${storeItems.size} itens à venda"
                     } else {
                         null
                     },
@@ -266,6 +267,7 @@ fun App() {
                         },
                         onDelete = { item ->
                             itens.removeAll { it.id == item.id }
+                            lojas.replaceAll { it.copy(itemIds = it.itemIds - item.id) }
                         }
                     )
                 }
@@ -329,7 +331,20 @@ fun App() {
                 ) {
                     StoreScreen(
                         modifier = contentModifier,
-                        itens = itens
+                        descricao = routeStore?.descricao.orEmpty(),
+                        itens = storeItems,
+                        isMaster = mode == Mode.Master,
+                        onItemClick = { item ->
+                            if (mode == Mode.Master) {
+                                navController.navigate(Routes.itemRegistration(item.id))
+                            }
+                        },
+                        onRemoveItem = { item ->
+                            val index = lojas.indexOfFirst { it.id == routeStore?.id }
+                            if (index >= 0) {
+                                lojas[index] = lojas[index].copy(itemIds = lojas[index].itemIds - item.id)
+                            }
+                        }
                     )
                 }
 
@@ -348,6 +363,7 @@ fun App() {
                     StoreRegistrationScreen(
                         modifier = contentModifier,
                         lojaInicial = editingStore,
+                        items = itens,
                         onCancelar = { navController.popBackStack() },
                         onSalvar = { loja ->
                             val indice = lojas.indexOfFirst { it.id == loja.id }

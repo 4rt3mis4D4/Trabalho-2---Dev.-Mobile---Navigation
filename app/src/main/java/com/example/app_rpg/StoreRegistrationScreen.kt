@@ -5,6 +5,15 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,13 +57,15 @@ data class LojaRpg(
     val nome : String,
     val descricao: String,
     val imagemUri: Uri?,
-    val visivel: Boolean
+    val visivel: Boolean,
+    val itemIds: Set<Int> = emptySet()
 )
 
 @Composable
 fun StoreRegistrationScreen(
     modifier: Modifier = Modifier,
     lojaInicial: LojaRpg? = null,
+    items: List<ItemRpg> = emptyList(),
     onCancelar: () -> Unit = {},
     onSalvar: (LojaRpg) -> Unit = {}
 ) {
@@ -71,6 +82,10 @@ fun StoreRegistrationScreen(
 
     var visivel by rememberSaveable {
         mutableStateOf(lojaInicial?.visivel ?: true)
+    }
+
+    var itemIds by rememberSaveable {
+        mutableStateOf(lojaInicial?.itemIds.orEmpty())
     }
 
     var imagemUri by remember {
@@ -232,6 +247,18 @@ fun StoreRegistrationScreen(
             )
         }
 
+        Spacer(modifier = Modifier.height(20.dp))
+
+        FieldLabel("Itens à venda (${itemIds.size})")
+
+        StoreItemsSelector(
+            items = items,
+            selectedIds = itemIds,
+            onToggle = { id ->
+                itemIds = if (id in itemIds) itemIds - id else itemIds + id
+            }
+        )
+
         Spacer(modifier = Modifier.height(32.dp))
 
         // BOTÕES
@@ -275,7 +302,8 @@ fun StoreRegistrationScreen(
                             nome = nome.trim(),
                             descricao = descricao.trim(),
                             imagemUri = imagemUri,
-                            visivel = visivel
+                            visivel = visivel,
+                            itemIds = itemIds
                         )
 
                         Toast.makeText(
@@ -314,4 +342,89 @@ private fun FieldLabel(text: String) {
         fontWeight = FontWeight.Medium
     )
     Spacer(modifier = Modifier.height(8.dp))
+}
+
+@Composable
+private fun StoreItemsSelector(
+    items: List<ItemRpg>,
+    selectedIds: Set<Int>,
+    onToggle: (Int) -> Unit
+) {
+    val palette = LocalModePalette.current
+
+    if (items.isEmpty()) {
+        Text(
+            text = "Nenhum item cadastrado.\nCrie itens na aba Itens para vendê-los aqui.",
+            color = corCinzaMedio,
+            fontSize = 13.sp
+        )
+        return
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items.forEach { item ->
+            val selected = item.id in selectedIds
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (selected) palette.surface else corCinzaEscuro)
+                    .border(
+                        width = 1.dp,
+                        color = if (selected) palette.strong else Color.Transparent,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .toggleable(
+                        value = selected,
+                        role = Role.Checkbox,
+                        onValueChange = { onToggle(item.id) }
+                    )
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Checkbox(
+                    checked = selected,
+                    onCheckedChange = null,
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = palette.strong,
+                        uncheckedColor = corCinzaMedio,
+                        checkmarkColor = corBrancoPuro
+                    )
+                )
+
+                Icon(
+                    painter = painterResource(item.itemCat.iconsRes),
+                    contentDescription = item.itemCat.nome,
+                    tint = if (selected) corBrancoPuro else corCinzaMedio,
+                    modifier = Modifier.size(24.dp)
+                )
+
+                Text(
+                    text = item.itemName,
+                    color = if (selected) corBrancoPuro else corBrancoOffWhite,
+                    fontSize = 15.sp,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Icon(
+                    painter = painterResource(R.drawable.icon_money),
+                    contentDescription = null,
+                    tint = palette.soft,
+                    modifier = Modifier.size(16.dp)
+                )
+
+                Text(
+                    text = item.itemValue.toString(),
+                    color = palette.soft,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
 }
