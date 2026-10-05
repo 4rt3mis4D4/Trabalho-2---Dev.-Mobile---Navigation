@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -21,7 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -90,7 +88,10 @@ enum class Mode(
     val tabs: List<Destination>
 ) {
     Player("Jogador", listOf(Destination.Dice, Destination.CharacterSheet, Destination.StoreList)),
-    Master("Mestre", listOf(Destination.Playlist, Destination.Items, Destination.StoreList))
+    Master("Mestre", listOf(Destination.Playlist, Destination.Items, Destination.StoreList));
+
+    val other: Mode
+        get() = if (this == Player) Master else Player
 }
 
 private fun NavHostController.navigateToTab(route: String) {
@@ -111,13 +112,12 @@ fun App() {
 
     var user by rememberSaveable { mutableStateOf(User()) }
     val mode = user.mode
-    val lojas = remember {
-        mutableStateListOf<LojaRpg>()
+    val modeColor = when (mode) {
+        Mode.Master -> corMestreDestaque
+        Mode.Player -> corJogadorPrincipal
     }
-
-    val itens = remember {
-        mutableStateListOf<ItemRpg>()
-    }
+    val lojas = remember { mutableStateListOf<LojaRpg>() }
+    val itens = remember { mutableStateListOf<ItemRpg>() }
 
     val routeStoreId = backStackEntry?.arguments?.getInt(Routes.STORE_ID_ARG)
     val routeStore = lojas.firstOrNull { it.id == routeStoreId }
@@ -148,57 +148,39 @@ fun App() {
         },
         bottomBar = {
             NavigationBar(containerColor = corCinzaEscuro) {
-                mode.tabs
-                    .forEach { destination ->
-                        NavigationBarItem(
-                            selected = currentRoute == destination.route ||
-                                (destination == Destination.StoreList && currentRoute in storeInternalRoutes),
-
-                            onClick = {
-                                navController.navigateToTab(destination.route)
-                            },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(
-                                        destination.iconRes
-                                    ),
-                                    contentDescription = destination.label
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = destination.label,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            },
-                            colors =
-                                NavigationBarItemDefaults.colors(
-                                    selectedIconColor = corBrancoPuro,
-                                    selectedTextColor = corBrancoPuro,
-
-                                    indicatorColor = when (mode) {
-                                        Mode.Master -> corMestreDestaque
-                                        Mode.Player -> corJogadorPrincipal
-                                },
-                                unselectedIconColor = corCinzaMedio,
-                                unselectedTextColor = corCinzaMedio,
+                mode.tabs.forEach { destination ->
+                    NavigationBarItem(
+                        selected = currentRoute == destination.route ||
+                            (destination == Destination.StoreList && currentRoute in storeInternalRoutes),
+                        onClick = { navController.navigateToTab(destination.route) },
+                        icon = {
+                            Icon(
+                                painter = painterResource(destination.iconRes),
+                                contentDescription = destination.label
                             )
+                        },
+                        label = {
+                            Text(
+                                text = destination.label,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = corBrancoPuro,
+                            selectedTextColor = corBrancoPuro,
+                            indicatorColor = modeColor,
+                            unselectedIconColor = corCinzaMedio,
+                            unselectedTextColor = corCinzaMedio,
+                        )
                     )
                 }
 
                 //Toggles between Player and Master mode
-                val modeColor = when (mode) {
-                    Mode.Master -> corMestreDestaque
-                    Mode.Player -> corJogadorPrincipal
-                }
                 NavigationBarItem(
                     selected = false,
                     onClick = {
-                        val newMode = when (mode) {
-                            Mode.Player -> Mode.Master
-                            Mode.Master -> Mode.Player
-                        }
+                        val newMode = mode.other
                         user = user.copy(mode = newMode)
                         val stillAvailable = newMode.tabs.any { it.route == currentRoute } ||
                             currentRoute in storeInternalRoutes
@@ -209,9 +191,7 @@ fun App() {
                     icon = {
                         Icon(
                             painter = painterResource(R.drawable.icon_swap),
-                            contentDescription = "Alternar para modo ${
-                                if (mode == Mode.Player) Mode.Master.label else Mode.Player.label
-                            }"
+                            contentDescription = "Alternar para modo ${mode.other.label}"
                         )
                     },
                     label = {
@@ -226,9 +206,9 @@ fun App() {
                         unselectedTextColor = modeColor,
                     )
                 )
+            }
         }
-    }
-) { innerPadding ->
+    ) { innerPadding ->
         val contentModifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
@@ -237,24 +217,10 @@ fun App() {
             navController = navController,
             startDestination = Routes.DICE
         ) {
-            composable(Routes.DICE) {
-                DiceScreen(contentModifier)
-            }
-
-            composable(Routes.CHARACTER_SHEET) {
-                FichaPersonagemScreen(contentModifier)
-            }
-
-            composable(Routes.PLAYLIST) {
-                Playlist(contentModifier)
-            }
-
-            composable(Routes.ITEMS) {
-                ItemRegistrationScreen(
-                    contentModifier,
-                    itens
-                )
-            }
+            composable(Routes.DICE) { DiceScreen(contentModifier) }
+            composable(Routes.CHARACTER_SHEET) { FichaPersonagemScreen(contentModifier) }
+            composable(Routes.PLAYLIST) { Playlist(contentModifier) }
+            composable(Routes.ITEMS) { ItemRegistrationScreen(contentModifier, itens) }
 
             composable(Routes.STORE_LIST) {
                 StoreListScreen(
@@ -307,38 +273,19 @@ fun App() {
                 StoreRegistrationScreen(
                     modifier = contentModifier,
                     lojaInicial = editingStore,
-                    onCancelar = {
-                        navController.popBackStack()
-                    },
-
+                    onCancelar = { navController.popBackStack() },
                     onSalvar = { loja ->
                         val indice = lojas.indexOfFirst { it.id == loja.id }
-
                         if (indice >= 0) {
                             lojas[indice] = loja
                         } else {
-                            val novaLoja = loja.copy(
-                                id = (lojas.maxOfOrNull { it.id } ?: 0) + 1
-                            )
-
-                            lojas.add(novaLoja)
+                            lojas.add(loja.copy(id = (lojas.maxOfOrNull { it.id } ?: 0) + 1))
                         }
-
                         navController.popBackStack()
                     }
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun PlaceholderScreen(
-    title: String,
-    modifier: Modifier = Modifier
-) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Text(title, color = corCinzaMedio, fontSize = 18.sp)
     }
 }
 

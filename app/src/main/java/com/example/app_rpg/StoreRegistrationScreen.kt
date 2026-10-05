@@ -2,7 +2,6 @@ package com.example.app_rpg
 
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -30,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,7 +59,6 @@ fun StoreRegistrationScreen(
     onCancelar: () -> Unit = {},
     onSalvar: (LojaRpg) -> Unit = {}
 ) {
-
     val context = LocalContext.current
 
     var nome by rememberSaveable {
@@ -99,20 +97,10 @@ fun StoreRegistrationScreen(
             .padding(24.dp)
     ) {
         // NOME
-        Text(
-            text = "Nome",
-            color = corCinzaMedio,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
-
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
+        FieldLabel("Nome")
 
         OutlinedTextField(
             value = nome,
-
             onValueChange = {
                 nome = it
 
@@ -120,18 +108,14 @@ fun StoreRegistrationScreen(
                     errorName = false
                 }
             },
-
             modifier = Modifier.fillMaxWidth(),
-
             placeholder = {
                 Text(
                     text = "Nome da loja",
                     color = corCinzaMedio
                 )
             },
-
             isError = errorName,
-
             supportingText = {
                 if (errorName) {
                     Text(
@@ -140,60 +124,37 @@ fun StoreRegistrationScreen(
                     )
                 }
             },
-
             singleLine = true,
-
-            keyboardOptions = KeyboardOptions(),
-
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = corCinzaEscuro,
                 unfocusedContainerColor = corCinzaEscuro,
-
                 focusedTextColor = corBrancoPuro,
                 unfocusedTextColor = corBrancoOffWhite,
-
                 focusedIndicatorColor = corMestreDestaque,
                 unfocusedIndicatorColor = corCinzaMedio,
-
                 cursorColor = corMestreDestaque
             ),
-
             shape = RoundedCornerShape(10.dp)
         )
 
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
+        Spacer(modifier = Modifier.height(20.dp))
 
         // IMAGEM
-        Text(
-            text = "Imagem",
-            color = corCinzaMedio,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
-
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
+        FieldLabel("Imagem")
 
         OutlinedButton(
             onClick = {
                 selecionarImagem.launch("image/*")
             },
-
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp),
-
             shape = RoundedCornerShape(10.dp),
-
             colors = ButtonDefaults.outlinedButtonColors(
                 containerColor = corCinzaEscuro,
                 contentColor = corBrancoPuro
             )
         ) {
-
             Text(
                 text = if (imagemUri == null) {
                     "Selecionar imagem"
@@ -204,10 +165,7 @@ fun StoreRegistrationScreen(
         }
 
         if (imagemUri != null) {
-
-            Spacer(
-                modifier = Modifier.height(6.dp)
-            )
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = "Imagem carregada",
@@ -216,75 +174,50 @@ fun StoreRegistrationScreen(
             )
         }
 
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
+        Spacer(modifier = Modifier.height(20.dp))
 
         // DESCRIÇÃO
-        Text(
-            text = "Descrição",
-            color = corCinzaMedio,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
-
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
+        FieldLabel("Descrição")
 
         OutlinedTextField(
             value = descricao,
-
             onValueChange = {
                 descricao = it
             },
-
             placeholder = {
                 Text(
                     text = "Digite uma descrição para a loja...",
                     color = corCinzaMedio
                 )
             },
-
             minLines = 6,
             maxLines = 10,
-
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp),
-
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = corCinzaEscuro,
                 unfocusedContainerColor = corCinzaEscuro,
-
                 focusedTextColor = corBrancoOffWhite,
                 unfocusedTextColor = corBrancoOffWhite,
-
                 focusedIndicatorColor = corMestrePrincipal,
                 unfocusedIndicatorColor = corCinzaMedio,
-
                 cursorColor = corMestreDestaque
             ),
-
             shape = RoundedCornerShape(10.dp)
         )
 
-        Spacer(
-            modifier = Modifier.height(18.dp)
-        )
+        Spacer(modifier = Modifier.height(18.dp))
 
         // VISIBILIDADE
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Checkbox(
                 checked = visivel,
-
                 onCheckedChange = {
                     visivel = it
                 },
-
                 colors = CheckboxDefaults.colors(
                     checkedColor = corMestrePrincipal,
                     uncheckedColor = corCinzaMedio,
@@ -299,9 +232,7 @@ fun StoreRegistrationScreen(
             )
         }
 
-        Spacer(
-            modifier = Modifier.height(32.dp)
-        )
+        Spacer(modifier = Modifier.height(32.dp))
 
         // BOTÕES
         Row(
@@ -319,18 +250,14 @@ fun StoreRegistrationScreen(
 
                     onCancelar()
                 },
-
                 modifier = Modifier
                     .weight(1f)
                     .height(52.dp),
-
                 shape = RoundedCornerShape(10.dp),
-
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = corMestreDestaque
                 )
             ) {
-
                 Text(
                     text = "CANCELAR",
                     fontWeight = FontWeight.Bold
@@ -340,13 +267,9 @@ fun StoreRegistrationScreen(
             //Salvar
             Button(
                 onClick = {
-
                     if (nome.isBlank()) {
-
                         errorName = true
-
                     } else {
-
                         val loja = LojaRpg(
                             id = lojaInicial?.id ?: 0,
                             nome = nome.trim(),
@@ -364,19 +287,15 @@ fun StoreRegistrationScreen(
                         onSalvar(loja)
                     }
                 },
-
                 modifier = Modifier
                     .weight(1f)
                     .height(52.dp),
-
                 colors = ButtonDefaults.buttonColors(
                     containerColor = corMestreDestaque,
                     contentColor = corBrancoPuro
                 ),
-
                 shape = RoundedCornerShape(10.dp)
             ) {
-
                 Text(
                     text = "SALVAR",
                     fontWeight = FontWeight.Bold
@@ -384,4 +303,15 @@ fun StoreRegistrationScreen(
             }
         }
     }
+}
+
+@Composable
+private fun FieldLabel(text: String) {
+    Text(
+        text = text,
+        color = corCinzaMedio,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium
+    )
+    Spacer(modifier = Modifier.height(8.dp))
 }

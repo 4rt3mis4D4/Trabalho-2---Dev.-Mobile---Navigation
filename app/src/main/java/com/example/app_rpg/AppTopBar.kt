@@ -36,17 +36,9 @@ fun AppTopBar(
     subtitle: String? = null,
     onBack: (() -> Unit)? = null
 ) {
-    val backgroundColor = when (mode) {
-        Mode.Master -> corMestreSombra
-        Mode.Player -> corJogadorEscuro
-    }
-    val accentColor = when (mode) {
-        Mode.Master -> corMestrePrincipal
-        Mode.Player -> corJogadorPrincipal
-    }
-    val subtitleColor = when (mode) {
-        Mode.Master -> corMestreDestaque
-        Mode.Player -> corJogadorDestaque
+    val (backgroundColor, accentColor, subtitleColor) = when (mode) {
+        Mode.Master -> Triple(corMestreSombra, corMestrePrincipal, corMestreDestaque)
+        Mode.Player -> Triple(corJogadorEscuro, corJogadorPrincipal, corJogadorDestaque)
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {

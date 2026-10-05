@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -95,10 +97,11 @@ fun DiceScreen(modifier: Modifier = Modifier) {
             onSubmit = ::submit
         )
 
-        DataSection(stats)
+        val currentStats = stats
+        DataSection(currentStats)
 
-        if (stats != null) {
-            DistributionSection(stats!!.bars)
+        if (currentStats != null) {
+            DistributionSection(currentStats.bars)
         } else {
             Text(
                 text = "Digite uma expressão como 2d6 + 3 para ver a distribuição.",
@@ -112,7 +115,7 @@ fun DiceScreen(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ExpressionSection(
-    state: androidx.compose.foundation.text.input.TextFieldState,
+    state: TextFieldState,
     error: String?,
     onSubmit: () -> Unit
 ) {
@@ -153,7 +156,7 @@ private fun ExpressionSection(
             onClick = onSubmit,
             modifier = Modifier.size(56.dp),
             shape = RoundedCornerShape(50),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+            contentPadding = PaddingValues(0.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = corJogadorPrincipal,
                 contentColor = corBrancoPuro

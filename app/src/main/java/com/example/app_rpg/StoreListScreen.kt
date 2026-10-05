@@ -78,47 +78,44 @@ fun StoreListScreen(
             .fillMaxSize()
             .background(corPretoPuro)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            if (displayedStores.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (isMaster) {
-                            "Nenhuma loja cadastrada ainda.\nToque em + para criar uma loja."
-                        } else {
-                            "Nenhuma loja disponível no momento."
-                        },
-                        color = corCinzaMedio,
-                        fontSize = 16.sp,
-                        textAlign = TextAlign.Center
+        if (displayedStores.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (isMaster) {
+                        "Nenhuma loja cadastrada ainda.\nToque em + para criar uma loja."
+                    } else {
+                        "Nenhuma loja disponível no momento."
+                    },
+                    color = corCinzaMedio,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    top = 20.dp,
+                    end = 20.dp,
+                    bottom = 96.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(displayedStores, key = { it.id }) { loja ->
+                    LojaCard(
+                        loja = loja,
+                        isMaster = isMaster,
+                        onClick = { onLojaClick(loja) },
+                        onEditar = { onEditar(loja) },
+                        onExcluir = { lojaParaExcluir = loja },
+                        onToggleVisibility = { onToggleVisibility(loja) }
                     )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(
-                        start = 20.dp,
-                        top = 20.dp,
-                        end = 20.dp,
-                        bottom = 96.dp
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    items(displayedStores, key = { it.id }) { loja ->
-                        LojaCard(
-                            loja = loja,
-                            isMaster = isMaster,
-                            onClick = { onLojaClick(loja) },
-                            onEditar = { onEditar(loja) },
-                            onExcluir = { lojaParaExcluir = loja },
-                            onToggleVisibility = { onToggleVisibility(loja) }
-                        )
-                    }
                 }
             }
         }

@@ -115,95 +115,89 @@ fun ItemRegistrationScreen(
         modifier = modifier
             .fillMaxSize()
             .background(corPretoPuro)
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        Text(
+            text = "Categoria",
+            color = corBrancoOffWhite,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
 
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+        SelectCategory(
+            selecionada = categoriaSelecionada,
+            onSelecionar = { categoriaSelecionada = it }
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = corMestreSombra),
+            border = BorderStroke(1.dp, corMestrePrincipal)
         ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                RegistrationField(
+                    value = nome,
+                    onValueChange = { nome = it },
+                    label = "Nome do item",
+                    iconeRes = listCatItem[categoriaSelecionada].iconsRes,
+                    isError = nomeInvalido,
+                    mensagemErro = "Informe o nome do item",
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                )
+
+                RegistrationField(
+                    value = valor,
+                    onValueChange = { novo -> valor = novo.filter { it.isDigit() }.take(9) },
+                    label = "Valor do item",
+                    iconeRes = R.drawable.icon_money,
+                    isError = valorInvalido,
+                    mensagemErro = "Informe o valor do item",
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                RegistrationField(
+                    value = descricao,
+                    onValueChange = { descricao = it },
+                    label = "Descrição do item",
+                    iconeRes = R.drawable.icon_edit,
+                    shape = RoundedCornerShape(24.dp),
+                    minLines = 3,
+                    maxLines = 5
+                )
+            }
+        }
+
+        Button(
+            onClick = { adicionarItem() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = corMestreDestaque,
+                contentColor = corBrancoPuro
+            )
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.icon_add),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
             Text(
-                text = "Categoria",
-                color = corBrancoOffWhite,
+                text = "Adicionar item",
+                modifier = Modifier.padding(start = 8.dp),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
-
-            SelectCategory(
-                selecionada = categoriaSelecionada,
-                onSelecionar = { categoriaSelecionada = it }
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = corMestreSombra),
-                border = BorderStroke(1.dp, corMestrePrincipal)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    RegistrationField(
-                        value = nome,
-                        onValueChange = { nome = it },
-                        label = "Nome do item",
-                        iconeRes = listCatItem[categoriaSelecionada].iconsRes,
-                        isError = nomeInvalido,
-                        mensagemErro = "Informe o nome do item",
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-                    )
-
-                    RegistrationField(
-                        value = valor,
-                        onValueChange = { novo -> valor = novo.filter { it.isDigit() }.take(9) },
-                        label = "Valor do item",
-                        iconeRes = R.drawable.icon_money,
-                        isError = valorInvalido,
-                        mensagemErro = "Informe o valor do item",
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Next
-                        )
-                    )
-
-                    RegistrationField(
-                        value = descricao,
-                        onValueChange = { descricao = it },
-                        label = "Descrição do item",
-                        iconeRes = R.drawable.icon_edit,
-                        shape = RoundedCornerShape(24.dp),
-                        minLines = 3,
-                        maxLines = 5
-                    )
-                }
-            }
-
-            Button(
-                onClick = { adicionarItem() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = corMestreDestaque,
-                    contentColor = corBrancoPuro
-                )
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.icon_add),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
-                )
-                Text(
-                    text = "Adicionar item",
-                    modifier = Modifier.padding(start = 8.dp),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
         }
     }
 }

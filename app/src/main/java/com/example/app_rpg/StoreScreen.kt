@@ -53,7 +53,7 @@ fun StoreScreen(
 ) {
     val context = LocalContext.current
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(corPretoPuro)
@@ -61,8 +61,7 @@ fun StoreScreen(
         if (itens.isEmpty()) {
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .padding(32.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -75,7 +74,7 @@ fun StoreScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
@@ -107,7 +106,7 @@ private fun ItemCard(
         border = BorderStroke(1.dp, corJogadorPrincipal)
     ) {
         Row(
-            modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 12.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {

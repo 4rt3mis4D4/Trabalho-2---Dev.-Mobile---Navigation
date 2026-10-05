@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.app_rpg.ui.theme.corBrancoOffWhite
 import com.example.app_rpg.ui.theme.corBrancoPuro
-import com.example.app_rpg.ui.theme.corCinzaClaro
 import com.example.app_rpg.ui.theme.corCinzaEscuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
 import com.example.app_rpg.ui.theme.corJogadorPrincipal
@@ -186,29 +184,18 @@ fun PericiaSection() {
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                periciaMock.forEach { pericia ->
-                    LinhaPericia(
-                        proficiencia = pericia.proficiencia,
-                        bonus = pericia.bonus,
-                        nome = pericia.nome
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                periciaMock.forEach { pericia ->
-                    LinhaPericia(
-                        proficiencia = pericia.proficiencia,
-                        bonus = pericia.bonus,
-                        nome = pericia.nome
-                    )
+            repeat(2) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    periciaMock.forEach { pericia ->
+                        LinhaPericia(
+                            proficiencia = pericia.proficiencia,
+                            bonus = pericia.bonus,
+                            nome = pericia.nome
+                        )
+                    }
                 }
             }
         }
