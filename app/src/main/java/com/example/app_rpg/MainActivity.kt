@@ -133,7 +133,7 @@ fun App() {
                     Routes.STORE_REGISTRATION -> if (routeStore == null) "Criar Loja" else "Editar Loja"
                     else -> tab?.label.orEmpty()
                 },
-                mode = mode,
+                mode = if (currentRoute == Routes.STORE) Mode.Player else mode,
                 subtitle = if (currentRoute == Routes.STORE) {
                     if (itens.size == 1) "1 item à venda" else "${itens.size} itens à venda"
                 } else {
