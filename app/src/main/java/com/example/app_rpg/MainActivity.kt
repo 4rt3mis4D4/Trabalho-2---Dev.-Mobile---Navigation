@@ -119,9 +119,33 @@ fun App() {
         mutableStateListOf<ItemRpg>()
     }
 
+    val routeStoreId = backStackEntry?.arguments?.getInt(Routes.STORE_ID_ARG)
+    val routeStore = lojas.firstOrNull { it.id == routeStoreId }
+    val tab = Destination.entries.firstOrNull { it.route == currentRoute }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = corPretoPuro,
+        topBar = {
+            AppTopBar(
+                title = when (currentRoute) {
+                    Routes.STORE -> routeStore?.nome ?: "Loja"
+                    Routes.STORE_REGISTRATION -> if (routeStore == null) "Criar Loja" else "Editar Loja"
+                    else -> tab?.label.orEmpty()
+                },
+                mode = mode,
+                subtitle = if (currentRoute == Routes.STORE) {
+                    if (itens.size == 1) "1 item à venda" else "${itens.size} itens à venda"
+                } else {
+                    null
+                },
+                onBack = if (tab == null) {
+                    { navController.popBackStack() }
+                } else {
+                    null
+                }
+            )
+        },
         bottomBar = {
             NavigationBar(containerColor = corCinzaEscuro) {
                 mode.tabs
@@ -261,14 +285,10 @@ fun App() {
             composable(
                 route = Routes.STORE,
                 arguments = listOf(navArgument(Routes.STORE_ID_ARG) { type = NavType.IntType })
-            ) { entry ->
-                val storeId = entry.arguments?.getInt(Routes.STORE_ID_ARG)
-                val store = lojas.firstOrNull { it.id == storeId }
-
+            ) {
                 StoreScreen(
                     modifier = contentModifier,
-                    itens = itens,
-                    nomeLoja = store?.nome.orEmpty()
+                    itens = itens
                 )
             }
 

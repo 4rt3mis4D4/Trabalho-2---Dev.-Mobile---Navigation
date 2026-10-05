@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -71,7 +69,6 @@ fun StoreListScreen(
 
     val displayedStores = if (isMaster) lojas else lojas.filter { it.visivel }
 
-    //Loja aguardando confirmação de exclusão
     var lojaParaExcluir by remember {
         mutableStateOf<LojaRpg?>(null)
     }
@@ -82,8 +79,6 @@ fun StoreListScreen(
             .background(corPretoPuro)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            CabecalhoLojas()
-
             if (displayedStores.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -106,7 +101,6 @@ fun StoreListScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    //Espaço extra embaixo para o botão + não cobrir o último card
                     contentPadding = PaddingValues(
                         start = 20.dp,
                         top = 20.dp,
@@ -180,34 +174,6 @@ fun StoreListScreen(
 }
 
 @Composable
-private fun CabecalhoLojas() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(corMestreSombra)
-            .statusBarsPadding()
-    ) {
-        Text(
-            text = "Lojas",
-            color = corBrancoPuro,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.ExtraBold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 20.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(3.dp)
-                .background(corMestrePrincipal)
-        )
-    }
-}
-
-@Composable
 private fun LojaCard(
     loja: LojaRpg,
     isMaster: Boolean,
@@ -230,7 +196,6 @@ private fun LojaCard(
         ) {
             AvatarLoja(
                 visivel = loja.visivel,
-                //Only the master can hide/show the store by tapping the image
                 onClick = if (isMaster) onToggleVisibility else null
             )
 
@@ -327,7 +292,6 @@ private fun AvatarLoja(visivel: Boolean, onClick: (() -> Unit)? = null) {
             modifier = Modifier.size(40.dp)
         )
 
-        //Loja oculta: olho cortado por cima do ícone da loja
         if (!visivel) {
             Icon(
                 painter = painterResource(R.drawable.icon_visibility_off),
