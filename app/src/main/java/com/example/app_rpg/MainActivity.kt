@@ -134,6 +134,7 @@ fun App() {
     val mode = user.mode
     val lojas = remember { mutableStateListOf<LojaRpg>() }
     val itens = remember { mutableStateListOf<ItemRpg>() }
+    var characterSheet by remember { mutableStateOf(CharacterSheet()) }
 
     val routeStoreId = backStackEntry?.arguments?.getInt(Routes.STORE_ID_ARG)
     val routeStore = lojas.firstOrNull { it.id == routeStoreId }
@@ -240,7 +241,13 @@ fun App() {
                 startDestination = Routes.DICE
             ) {
                 composable(Routes.DICE) { DiceScreen(contentModifier) }
-                composable(Routes.CHARACTER_SHEET) { FichaPersonagemScreen(contentModifier) }
+                composable(Routes.CHARACTER_SHEET) {
+                    FichaPersonagemScreen(
+                        modifier = contentModifier,
+                        sheet = characterSheet,
+                        onSave = { characterSheet = it }
+                    )
+                }
                 composable(Routes.PLAYLIST) { Playlist(contentModifier) }
 
                 composable(Routes.ITEMS) {

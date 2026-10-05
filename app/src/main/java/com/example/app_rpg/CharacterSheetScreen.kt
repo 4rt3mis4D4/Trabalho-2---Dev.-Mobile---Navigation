@@ -1,7 +1,9 @@
 package com.example.app_rpg
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,12 +11,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -23,10 +28,22 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,7 +57,17 @@ import com.example.app_rpg.ui.theme.corPretoPuro
 
 data class AtributoData(val valor: String, val label: String)
 data class StatusData(val valor: String, val label: String)
-data class PericiasData(val proficiencia: Int, val bonus: Int, val nome: String)
+data class PericiasData(val proficiencia: Int, val bonus: String, val nome: String)
+
+data class CharacterSheet(
+    val name: String = "",
+    val level: String = "",
+    val characterClass: String = "",
+    val race: String = "",
+    val attributes: List<AtributoData> = atributosMock,
+    val status: List<StatusData> = statusMock,
+    val skills: List<PericiasData> = periciaMock
+)
 
 val atributosMock = listOf(
     AtributoData("1", "For"),
@@ -59,16 +86,19 @@ val statusMock = listOf(
 )
 
 val periciaMock = listOf(
-    PericiasData(proficiencia = 2, bonus = 2, nome = "Perícia X"),
-    PericiasData(proficiencia = 0, bonus = 0, nome = "Perícia Y"),
-    PericiasData(proficiencia = 1, bonus = 4, nome = "Perícia Z"),
-    PericiasData(proficiencia = 2, bonus = 2, nome = "Perícia A"),
-    PericiasData(proficiencia = 0, bonus = 0, nome = "Perícia B"),
-    PericiasData(proficiencia = 1, bonus = 4, nome = "Perícia C"),
-    PericiasData(proficiencia = 2, bonus = 2, nome = "Perícia U"),
-    PericiasData(proficiencia = 0, bonus = 0, nome = "Perícia I"),
-    PericiasData(proficiencia = 1, bonus = 4, nome = "Perícia V")
+    PericiasData(proficiencia = 2, bonus = "2", nome = "Perícia X"),
+    PericiasData(proficiencia = 0, bonus = "0", nome = "Perícia Y"),
+    PericiasData(proficiencia = 1, bonus = "4", nome = "Perícia Z"),
+    PericiasData(proficiencia = 2, bonus = "2", nome = "Perícia A"),
+    PericiasData(proficiencia = 0, bonus = "0", nome = "Perícia B"),
+    PericiasData(proficiencia = 1, bonus = "4", nome = "Perícia C"),
+    PericiasData(proficiencia = 2, bonus = "2", nome = "Perícia U"),
+    PericiasData(proficiencia = 0, bonus = "0", nome = "Perícia I"),
+    PericiasData(proficiencia = 1, bonus = "4", nome = "Perícia V")
 )
+
+private fun <T> List<T>.replaceAt(index: Int, value: T) =
+    toMutableList().also { it[index] = value }
 
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
@@ -78,38 +108,93 @@ fun FichaPersonagemScreenPreview(){
 }
 
 @Composable
-fun FichaPersonagemScreen(modifier: Modifier) {
+fun FichaPersonagemScreen(
+    modifier: Modifier,
+    sheet: CharacterSheet = CharacterSheet(),
+    onSave: (CharacterSheet) -> Unit = {}
+) {
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+
+    var draft by remember(sheet) { mutableStateOf(sheet) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(corPretoPuro)
+            .imePadding()
             .padding(horizontal = 20.dp, vertical = 24.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        HeaderSection()
-        ClasseRacaSection()
-        AtributosSection()
-        StatusSection()
-        PericiaSection()
-        BotoesAcaoSection()
+        HeaderSection(
+            name = draft.name,
+            level = draft.level,
+            onNameChange = { draft = draft.copy(name = it) },
+            onLevelChange = { draft = draft.copy(level = it) }
+        )
+        ClasseRacaSection(
+            characterClass = draft.characterClass,
+            race = draft.race,
+            onClassChange = { draft = draft.copy(characterClass = it) },
+            onRaceChange = { draft = draft.copy(race = it) }
+        )
+        AtributosSection(
+            attributes = draft.attributes,
+            onChange = { index, attribute ->
+                draft = draft.copy(attributes = draft.attributes.replaceAt(index, attribute))
+            }
+        )
+        StatusSection(
+            status = draft.status,
+            onChange = { index, status ->
+                draft = draft.copy(status = draft.status.replaceAt(index, status))
+            }
+        )
+        PericiaSection(
+            skills = draft.skills,
+            onChange = { index, skill ->
+                draft = draft.copy(skills = draft.skills.replaceAt(index, skill))
+            }
+        )
+        BotoesAcaoSection(
+            onCancel = {
+                focusManager.clearFocus()
+                draft = sheet
+            },
+            onSave = {
+                focusManager.clearFocus()
+                onSave(draft)
+                Toast.makeText(context, "Ficha salva com sucesso", Toast.LENGTH_SHORT).show()
+            }
+        )
     }
 }
 
 
 @Composable
-fun HeaderSection() {
+fun HeaderSection(
+    name: String,
+    level: String,
+    onNameChange: (String) -> Unit,
+    onLevelChange: (String) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CampoTextoEstatico(
-            texto = "Nome",
+        CampoTexto(
+            value = name,
+            onValueChange = onNameChange,
+            label = "Nome",
             modifier = Modifier.weight(2f)
         )
-        CampoTextoEstatico(
-            texto = "Level",
+        CampoTexto(
+            value = level,
+            onValueChange = { novo -> onLevelChange(novo.filter { it.isDigit() }.take(2)) },
+            label = "Level",
+            keyboardType = KeyboardType.Number,
             modifier = Modifier.weight(1f)
         )
     }
@@ -117,17 +202,26 @@ fun HeaderSection() {
 
 
 @Composable
-fun ClasseRacaSection() {
+fun ClasseRacaSection(
+    characterClass: String,
+    race: String,
+    onClassChange: (String) -> Unit,
+    onRaceChange: (String) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        CampoTextoEstatico(
-            texto = "Classe",
+        CampoTexto(
+            value = characterClass,
+            onValueChange = onClassChange,
+            label = "Classe",
             modifier = Modifier.weight(1f)
         )
-        CampoTextoEstatico(
-            texto = "Raça",
+        CampoTexto(
+            value = race,
+            onValueChange = onRaceChange,
+            label = "Raça",
             modifier = Modifier.weight(1f)
         )
     }
@@ -135,17 +229,24 @@ fun ClasseRacaSection() {
 
 
 @Composable
-fun AtributosSection() {
-    val linhas = atributosMock.chunked(3)
-
+fun AtributosSection(
+    attributes: List<AtributoData>,
+    onChange: (Int, AtributoData) -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        linhas.forEach { linha ->
+        attributes.withIndex().chunked(3).forEach { linha ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                linha.forEach { atributo ->
-                    CirculoAtributo(valor = atributo.valor, label = atributo.label)
+                linha.forEach { (index, atributo) ->
+                    CirculoAtributo(
+                        valor = atributo.valor,
+                        label = atributo.label,
+                        onValueChange = { novo ->
+                            onChange(index, atributo.copy(valor = novo.filter { it.isDigit() }.take(2)))
+                        }
+                    )
                 }
             }
         }
@@ -154,15 +255,19 @@ fun AtributosSection() {
 
 
 @Composable
-fun StatusSection() {
+fun StatusSection(
+    status: List<StatusData>,
+    onChange: (Int, StatusData) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        statusMock.forEach { status ->
+        status.forEachIndexed { index, item ->
             CardStatus(
-                valor = status.valor,
-                label = status.label,
+                valor = item.valor,
+                label = item.label,
+                onValueChange = { onChange(index, item.copy(valor = it.take(4))) },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -171,7 +276,10 @@ fun StatusSection() {
 
 
 @Composable
-fun PericiaSection() {
+fun PericiaSection(
+    skills: List<PericiasData>,
+    onChange: (Int, PericiasData) -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -184,16 +292,24 @@ fun PericiaSection() {
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            repeat(2) {
+            skills.withIndex().chunked((skills.size + 1) / 2).forEach { coluna ->
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    periciaMock.forEach { pericia ->
+                    coluna.forEach { (index, pericia) ->
                         LinhaPericia(
                             proficiencia = pericia.proficiencia,
                             bonus = pericia.bonus,
-                            nome = pericia.nome
+                            nome = pericia.nome,
+                            onProficienciaClick = {
+                                onChange(index, pericia.copy(proficiencia = (pericia.proficiencia + 1) % 3))
+                            },
+                            onBonusChange = { novo ->
+                                val bonus = novo.filterIndexed { i, c -> c.isDigit() || (i == 0 && c == '-') }
+                                onChange(index, pericia.copy(bonus = bonus.take(3)))
+                            },
+                            onNomeChange = { onChange(index, pericia.copy(nome = it)) }
                         )
                     }
                 }
@@ -203,15 +319,15 @@ fun PericiaSection() {
 }
 
 @Composable
-fun BotoesAcaoSection() {
+fun BotoesAcaoSection(onCancel: () -> Unit, onSave: () -> Unit) {
     val palette = LocalModePalette.current
-    
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Button(
-            onClick = {},
+            onClick = onCancel,
             modifier = Modifier
                 .weight(1f)
                 .height(52.dp),
@@ -229,7 +345,7 @@ fun BotoesAcaoSection() {
         }
 
         Button(
-            onClick = {},
+            onClick = onSave,
             modifier = Modifier
                 .weight(1f)
                 .height(52.dp),
@@ -250,25 +366,77 @@ fun BotoesAcaoSection() {
 
 
 @Composable
-fun CampoTextoEstatico(texto: String, modifier: Modifier = Modifier) {
-    Box(
+private fun SheetTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    textStyle: TextStyle,
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    val palette = LocalModePalette.current
+
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        textStyle = textStyle,
+        singleLine = true,
+        cursorBrush = SolidColor(palette.accent),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Next),
+        decorationBox = { innerTextField ->
+            Box(contentAlignment = Alignment.CenterStart) {
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = textStyle.copy(color = corCinzaMedio),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                innerTextField()
+            }
+        }
+    )
+}
+
+
+@Composable
+fun CampoTexto(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    Column(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
             .background(corCinzaEscuro)
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Text(
-            text = texto,
-            color = corBrancoOffWhite,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            text = label,
+            color = corCinzaMedio,
+            fontSize = 10.sp,
+            lineHeight = 12.sp
+        )
+        SheetTextField(
+            value = value,
+            onValueChange = onValueChange,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                color = corBrancoOffWhite,
+                fontWeight = FontWeight.Medium
+            ),
+            placeholder = label,
+            keyboardType = keyboardType,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
 
 @Composable
-fun CirculoAtributo(valor: String, label: String) {
+fun CirculoAtributo(valor: String, label: String, onValueChange: (String) -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -281,12 +449,19 @@ fun CirculoAtributo(valor: String, label: String) {
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = valor,
-                    color = corBrancoPuro,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 22.sp
+                SheetTextField(
+                    value = valor,
+                    onValueChange = onValueChange,
+                    textStyle = TextStyle(
+                        color = corBrancoPuro,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 22.sp,
+                        textAlign = TextAlign.Center
+                    ),
+                    placeholder = "0",
+                    keyboardType = KeyboardType.Number,
+                    modifier = Modifier.width(48.dp)
                 )
                 Text(
                     text = label,
@@ -302,7 +477,12 @@ fun CirculoAtributo(valor: String, label: String) {
 
 
 @Composable
-fun CardStatus(valor: String, label: String, modifier: Modifier = Modifier) {
+fun CardStatus(
+    valor: String,
+    label: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(14.dp),
@@ -316,12 +496,18 @@ fun CardStatus(valor: String, label: String, modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = valor,
-                color = corBrancoPuro,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.ExtraBold,
-                lineHeight = 22.sp
+            SheetTextField(
+                value = valor,
+                onValueChange = onValueChange,
+                textStyle = TextStyle(
+                    color = corBrancoPuro,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    lineHeight = 22.sp,
+                    textAlign = TextAlign.Center
+                ),
+                placeholder = "-",
+                modifier = Modifier.fillMaxWidth()
             )
             Text(
                 text = label,
@@ -336,7 +522,14 @@ fun CardStatus(valor: String, label: String, modifier: Modifier = Modifier) {
 
 
 @Composable
-fun LinhaPericia(proficiencia: Int, bonus: Int, nome: String) {
+fun LinhaPericia(
+    proficiencia: Int,
+    bonus: String,
+    nome: String,
+    onProficienciaClick: () -> Unit,
+    onBonusChange: (String) -> Unit,
+    onNomeChange: (String) -> Unit
+) {
     val palette = LocalModePalette.current
     val corIndicador = when {
         proficiencia >= 2 -> palette.accent
@@ -359,28 +552,44 @@ fun LinhaPericia(proficiencia: Int, bonus: Int, nome: String) {
                     color = corCinzaMedio.copy(alpha = 0.4f),
                     shape = CircleShape
                 )
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = "Alterar proficiência de $nome",
+                    onClick = onProficienciaClick
+                )
         )
 
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
                 .background(corPretoPuro.copy(alpha = 0.35f))
-                .padding(horizontal = 10.dp, vertical = 4.dp),
+                .padding(horizontal = 6.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = bonus.toString(),
-                color = corBrancoOffWhite,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold
+            SheetTextField(
+                value = bonus,
+                onValueChange = onBonusChange,
+                textStyle = TextStyle(
+                    color = corBrancoOffWhite,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center
+                ),
+                placeholder = "0",
+                keyboardType = KeyboardType.Number,
+                modifier = Modifier.width(28.dp)
             )
         }
 
-        Text(
-            text = nome,
-            color = corBrancoOffWhite,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Normal
+        SheetTextField(
+            value = nome,
+            onValueChange = onNomeChange,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                color = corBrancoOffWhite,
+                fontWeight = FontWeight.Normal
+            ),
+            placeholder = "Perícia",
+            modifier = Modifier.weight(1f)
         )
     }
 }
