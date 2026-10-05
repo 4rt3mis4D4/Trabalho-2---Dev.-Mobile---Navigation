@@ -1,7 +1,6 @@
 package com.example.app_rpg
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,7 +23,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,7 +55,10 @@ enum class Destination(
     CharacterSheet("Ficha", R.drawable.ic_character_sheet),
     Playlist("Música", R.drawable.ic_playlist),
 
-    StoreRegistration("Criar Loja", R.drawable.icon_store)
+    //Tela interna, não aparece na barra inferior
+    StoreRegistration("Criar Loja", R.drawable.ic_store),
+    Items("Itens", R.drawable.icon_tools),
+    Store("Loja", R.drawable.ic_store)
 }
 
 @Composable
@@ -70,6 +71,20 @@ fun App() {
         mutableStateOf("")
     }
 
+    val itens = remember {
+        mutableStateListOf<ItemRpg>()
+    }
+
+    //   Destination.StoreRegistration -> StoreRegistrationScreen(
+    //       modifier = contentModifier,
+    //       onLojaSalva = salvarNomeLoja
+    //   )
+
+    val salvarNomeLoja: (String) -> Unit = { novoNome ->
+        nomeLoja = novoNome.trim()
+        current = Destination.Store
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = corPretoPuro,
@@ -80,40 +95,47 @@ fun App() {
                         it != Destination.StoreRegistration
                     }
                     .forEach { destination ->
-                    NavigationBarItem(
-                        selected = current == destination,
-                        onClick = { current = destination },
-                        icon = {
-                            Icon(
-                                painter = painterResource(destination.iconRes),
-                                contentDescription = destination.label
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = destination.label,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = corBrancoPuro,
-                            selectedTextColor = corBrancoPuro,
+                        NavigationBarItem(
+                            selected = current == destination,
 
-                            indicatorColor = when(destination){
-                                Destination.Playlist ->
-                                    corMestreDestaque
-                            else ->
-                                corJogadorPrincipal
+                            onClick = {
+                                current = destination
                             },
-                            unselectedIconColor = corCinzaMedio,
-                            unselectedTextColor = corCinzaMedio,
-                        )
+                            icon = {
+                                Icon(
+                                    painter = painterResource(
+                                        destination.iconRes
+                                    ),
+                                    contentDescription = destination.label
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = destination.label,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            },
+                            colors =
+                                NavigationBarItemDefaults.colors(
+                                    selectedIconColor = corBrancoPuro,
+                                    selectedTextColor = corBrancoPuro,
+
+                                    indicatorColor = when(destination){
+                                        Destination.Playlist,
+                                        Destination.Items ->
+                                            corMestreDestaque
+                                        else ->
+                                            corJogadorPrincipal
+                                },
+                                unselectedIconColor = corCinzaMedio,
+                                unselectedTextColor = corCinzaMedio,
+                            )
                     )
                 }
-            }
         }
-    ) { innerPadding ->
+    }
+) { innerPadding ->
         val contentModifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
@@ -122,11 +144,20 @@ fun App() {
             Destination.Dice -> DiceScreen(contentModifier)
             Destination.CharacterSheet -> FichaPersonagemScreen(contentModifier)
             Destination.Playlist -> Playlist(contentModifier)
+            Destination.Items -> ItemRegistrationScreen(
+                contentModifier,
+                itens
+            )
+            Destination.Store -> StoreScreen(
+                modifier = contentModifier,
+                itens = itens,
+                nomeLoja = nomeLoja
+            )
+
             Destination.StoreRegistration -> StoreRegistrationScreen(
                 modifier = contentModifier,
-
                 onCancelar = {
-                    current = Destination.StoreRegistration
+                    current = Destination.Store
                 },
 
                 onSalvar = { loja ->
@@ -137,6 +168,7 @@ fun App() {
 
                     lojas.add(novaLoja)
                 }
+
             )
         }
     }
