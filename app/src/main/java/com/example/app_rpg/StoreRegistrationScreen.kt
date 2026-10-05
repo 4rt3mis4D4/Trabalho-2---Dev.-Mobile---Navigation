@@ -59,6 +59,7 @@ data class LojaRpg(
 @Composable
 fun StoreRegistrationScreen(
     modifier: Modifier = Modifier,
+    lojaInicial: LojaRpg? = null,
     onCancelar: () -> Unit = {},
     onSalvar: (LojaRpg) -> Unit = {}
 ) {
@@ -66,19 +67,19 @@ fun StoreRegistrationScreen(
     val context = LocalContext.current
 
     var nome by rememberSaveable {
-        mutableStateOf("")
+        mutableStateOf(lojaInicial?.nome ?: "")
     }
 
     var descricao by rememberSaveable {
-        mutableStateOf("")
+        mutableStateOf(lojaInicial?.descricao ?: "")
     }
 
     var visivel by rememberSaveable {
-        mutableStateOf(true)
+        mutableStateOf(lojaInicial?.visivel ?: true)
     }
 
     var imagemUri by remember {
-        mutableStateOf<Uri?>(null)
+        mutableStateOf(lojaInicial?.imagemUri)
     }
 
     var errorName by rememberSaveable {
@@ -108,7 +109,7 @@ fun StoreRegistrationScreen(
         ) {
 
             Text(
-                text = "CRIAR LOJA",
+                text = if (lojaInicial == null) "CRIAR LOJA" else "EDITAR LOJA",
                 color = corBrancoPuro,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
@@ -378,7 +379,7 @@ fun StoreRegistrationScreen(
                     } else {
 
                         val loja = LojaRpg(
-                            id = 0,
+                            id = lojaInicial?.id ?: 0,
                             nome = nome.trim(),
                             descricao = descricao.trim(),
                             imagemUri = imagemUri,

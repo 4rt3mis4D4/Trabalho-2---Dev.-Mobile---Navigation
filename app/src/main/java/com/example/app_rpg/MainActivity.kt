@@ -55,11 +55,15 @@ enum class Destination(
     CharacterSheet("Ficha", R.drawable.ic_character_sheet),
     Playlist("Música", R.drawable.ic_playlist),
 
-    //Tela interna, não aparece na barra inferior
-    StoreRegistration("Criar Loja", R.drawable.ic_store),
     Items("Itens", R.drawable.icon_tools),
+    StoreList("Lojas", R.drawable.ic_store),
+
+    //Telas internas, não aparecem na barra inferior
+    StoreRegistration("Criar Loja", R.drawable.ic_store),
     Store("Loja", R.drawable.ic_store)
 }
+
+private val telasInternasLojas = setOf(Destination.StoreRegistration, Destination.Store)
 
 @Composable
 fun App() {
@@ -69,6 +73,11 @@ fun App() {
     }
     var nomeLoja by rememberSaveable {
         mutableStateOf("")
+    }
+
+    //Loja sendo editada; null quando o cadastro é de uma loja nova
+    var lojaEditando by remember {
+        mutableStateOf<LojaRpg?>(null)
     }
 
     val itens = remember {
@@ -92,11 +101,12 @@ fun App() {
             NavigationBar(containerColor = corCinzaEscuro) {
                 Destination.entries
                     .filter {
-                        it != Destination.StoreRegistration
+                        it !in telasInternasLojas
                     }
                     .forEach { destination ->
                         NavigationBarItem(
-                            selected = current == destination,
+                            selected = current == destination ||
+                                (destination == Destination.StoreList && current in telasInternasLojas),
 
                             onClick = {
                                 current = destination
@@ -148,6 +158,26 @@ fun App() {
                 contentModifier,
                 itens
             )
+            Destination.StoreList -> StoreListScreen(
+                modifier = contentModifier,
+                lojas = lojas,
+                onLojaClick = { loja ->
+                    nomeLoja = loja.nome
+                    current = Destination.Store
+                },
+                onAdicionar = {
+                    lojaEditando = null
+                    current = Destination.StoreRegistration
+                },
+                onEditar = { loja ->
+                    lojaEditando = loja
+                    current = Destination.StoreRegistration
+                },
+                onExcluir = { loja ->
+                    lojas.removeAll { it.id == loja.id }
+                }
+            )
+
             Destination.Store -> StoreScreen(
                 modifier = contentModifier,
                 itens = itens,
@@ -156,19 +186,28 @@ fun App() {
 
             Destination.StoreRegistration -> StoreRegistrationScreen(
                 modifier = contentModifier,
+                lojaInicial = lojaEditando,
                 onCancelar = {
-                    current = Destination.Store
+                    current = Destination.StoreList
                 },
 
                 onSalvar = { loja ->
-                    //Gera o ID da nova loja
-                    val novaLoja = loja.copy(
-                        id = (lojas.maxOfOrNull { it.id } ?: 0) + 1
-                    )
+                    val indice = lojas.indexOfFirst { it.id == loja.id }
 
-                    lojas.add(novaLoja)
+                    if (indice >= 0) {
+                        //Edição: substitui a loja existente
+                        lojas[indice] = loja
+                    } else {
+                        //Gera o ID da nova loja
+                        val novaLoja = loja.copy(
+                            id = (lojas.maxOfOrNull { it.id } ?: 0) + 1
+                        )
+
+                        lojas.add(novaLoja)
+                    }
+
+                    current = Destination.StoreList
                 }
-
             )
         }
     }
