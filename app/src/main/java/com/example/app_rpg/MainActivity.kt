@@ -27,6 +27,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.app_rpg.ui.theme.App_rpgTheme
 import com.example.app_rpg.ui.theme.corBrancoPuro
 import com.example.app_rpg.ui.theme.corCinzaEscuro
@@ -47,23 +55,35 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-enum class Destination(
-    val label: String,
-    @param:DrawableRes val iconRes: Int
-) {
-    Dice("Dados", R.drawable.ic_dice),
-    CharacterSheet("Ficha", R.drawable.ic_character_sheet),
-    Playlist("Música", R.drawable.ic_playlist),
+object Routes {
+    const val DICE = "dice"
+    const val CHARACTER_SHEET = "character_sheet"
+    const val PLAYLIST = "playlist"
+    const val ITEMS = "items"
+    const val STORE_LIST = "stores"
 
-    Items("Itens", R.drawable.icon_tools),
-    StoreList("Lojas", R.drawable.ic_store),
+    const val STORE_ID_ARG = "storeId"
+    const val STORE = "store/{$STORE_ID_ARG}"
+    const val STORE_REGISTRATION = "store_registration?$STORE_ID_ARG={$STORE_ID_ARG}"
 
-    //Telas internas, não aparecem na barra inferior
-    StoreRegistration("Criar Loja", R.drawable.ic_store),
-    Store("Loja", R.drawable.ic_store)
+    fun store(storeId: Int) = "store/$storeId"
+    fun storeRegistration(storeId: Int? = null) =
+        if (storeId == null) "store_registration" else "store_registration?$STORE_ID_ARG=$storeId"
 }
 
-private val telasInternasLojas = setOf(Destination.StoreRegistration, Destination.Store)
+enum class Destination(
+    val label: String,
+    @param:DrawableRes val iconRes: Int,
+    val route: String
+) {
+    Dice("Dados", R.drawable.ic_dice, Routes.DICE),
+    CharacterSheet("Ficha", R.drawable.ic_character_sheet, Routes.CHARACTER_SHEET),
+    Playlist("Música", R.drawable.ic_playlist, Routes.PLAYLIST),
+    Items("Itens", R.drawable.icon_tools, Routes.ITEMS),
+    StoreList("Lojas", R.drawable.ic_store, Routes.STORE_LIST)
+}
+
+private val storeInternalRoutes = setOf(Routes.STORE, Routes.STORE_REGISTRATION)
 
 enum class Mode(
     val label: String,
@@ -73,35 +93,30 @@ enum class Mode(
     Master("Mestre", listOf(Destination.Playlist, Destination.Items, Destination.StoreList))
 }
 
+private fun NavHostController.navigateToTab(route: String) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
 @Composable
 fun App() {
+    val navController = rememberNavController()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
     var user by rememberSaveable { mutableStateOf(User()) }
     val mode = user.mode
-    var current by rememberSaveable { mutableStateOf(Destination.Dice) }
     val lojas = remember {
         mutableStateListOf<LojaRpg>()
-    }
-    var nomeLoja by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    //Loja sendo editada; null quando o cadastro é de uma loja nova
-    var lojaEditando by remember {
-        mutableStateOf<LojaRpg?>(null)
     }
 
     val itens = remember {
         mutableStateListOf<ItemRpg>()
-    }
-
-    //   Destination.StoreRegistration -> StoreRegistrationScreen(
-    //       modifier = contentModifier,
-    //       onLojaSalva = salvarNomeLoja
-    //   )
-
-    val salvarNomeLoja: (String) -> Unit = { novoNome ->
-        nomeLoja = novoNome.trim()
-        current = Destination.Store
     }
 
     Scaffold(
@@ -112,11 +127,11 @@ fun App() {
                 mode.tabs
                     .forEach { destination ->
                         NavigationBarItem(
-                            selected = current == destination ||
-                                (destination == Destination.StoreList && current in telasInternasLojas),
+                            selected = currentRoute == destination.route ||
+                                (destination == Destination.StoreList && currentRoute in storeInternalRoutes),
 
                             onClick = {
-                                current = destination
+                                navController.navigateToTab(destination.route)
                             },
                             icon = {
                                 Icon(
@@ -161,8 +176,10 @@ fun App() {
                             Mode.Master -> Mode.Player
                         }
                         user = user.copy(mode = newMode)
-                        if (current !in newMode.tabs && current !in telasInternasLojas) {
-                            current = newMode.tabs.first()
+                        val stillAvailable = newMode.tabs.any { it.route == currentRoute } ||
+                            currentRoute in storeInternalRoutes
+                        if (!stillAvailable) {
+                            navController.navigateToTab(newMode.tabs.first().route)
                         }
                     },
                     icon = {
@@ -192,72 +209,105 @@ fun App() {
             .fillMaxSize()
             .padding(innerPadding)
 
-        when (current) {
-            Destination.Dice -> DiceScreen(contentModifier)
-            Destination.CharacterSheet -> FichaPersonagemScreen(contentModifier)
-            Destination.Playlist -> Playlist(contentModifier)
-            Destination.Items -> ItemRegistrationScreen(
-                contentModifier,
-                itens
-            )
-            Destination.StoreList -> StoreListScreen(
-                modifier = contentModifier,
-                lojas = lojas,
-                isMaster = mode == Mode.Master,
-                onLojaClick = { loja ->
-                    nomeLoja = loja.nome
-                    current = Destination.Store
-                },
-                onAdicionar = {
-                    lojaEditando = null
-                    current = Destination.StoreRegistration
-                },
-                onEditar = { loja ->
-                    lojaEditando = loja
-                    current = Destination.StoreRegistration
-                },
-                onExcluir = { loja ->
-                    lojas.removeAll { it.id == loja.id }
-                },
-                onToggleVisibility = { loja ->
-                    val indice = lojas.indexOfFirst { it.id == loja.id }
-                    if (indice >= 0) {
-                        lojas[indice] = loja.copy(visivel = !loja.visivel)
+        NavHost(
+            navController = navController,
+            startDestination = Routes.DICE
+        ) {
+            composable(Routes.DICE) {
+                DiceScreen(contentModifier)
+            }
+
+            composable(Routes.CHARACTER_SHEET) {
+                FichaPersonagemScreen(contentModifier)
+            }
+
+            composable(Routes.PLAYLIST) {
+                Playlist(contentModifier)
+            }
+
+            composable(Routes.ITEMS) {
+                ItemRegistrationScreen(
+                    contentModifier,
+                    itens
+                )
+            }
+
+            composable(Routes.STORE_LIST) {
+                StoreListScreen(
+                    modifier = contentModifier,
+                    lojas = lojas,
+                    isMaster = mode == Mode.Master,
+                    onLojaClick = { loja ->
+                        navController.navigate(Routes.store(loja.id))
+                    },
+                    onAdicionar = {
+                        navController.navigate(Routes.storeRegistration())
+                    },
+                    onEditar = { loja ->
+                        navController.navigate(Routes.storeRegistration(loja.id))
+                    },
+                    onExcluir = { loja ->
+                        lojas.removeAll { it.id == loja.id }
+                    },
+                    onToggleVisibility = { loja ->
+                        val indice = lojas.indexOfFirst { it.id == loja.id }
+                        if (indice >= 0) {
+                            lojas[indice] = loja.copy(visivel = !loja.visivel)
+                        }
                     }
-                }
-            )
+                )
+            }
 
-            Destination.Store -> StoreScreen(
-                modifier = contentModifier,
-                itens = itens,
-                nomeLoja = nomeLoja
-            )
+            composable(
+                route = Routes.STORE,
+                arguments = listOf(navArgument(Routes.STORE_ID_ARG) { type = NavType.IntType })
+            ) { entry ->
+                val storeId = entry.arguments?.getInt(Routes.STORE_ID_ARG)
+                val store = lojas.firstOrNull { it.id == storeId }
 
-            Destination.StoreRegistration -> StoreRegistrationScreen(
-                modifier = contentModifier,
-                lojaInicial = lojaEditando,
-                onCancelar = {
-                    current = Destination.StoreList
-                },
+                StoreScreen(
+                    modifier = contentModifier,
+                    itens = itens,
+                    nomeLoja = store?.nome.orEmpty()
+                )
+            }
 
-                onSalvar = { loja ->
-                    val indice = lojas.indexOfFirst { it.id == loja.id }
-
-                    if (indice >= 0) {
-                        //Edição: substitui a loja existente
-                        lojas[indice] = loja
-                    } else {
-                        //Gera o ID da nova loja
-                        val novaLoja = loja.copy(
-                            id = (lojas.maxOfOrNull { it.id } ?: 0) + 1
-                        )
-
-                        lojas.add(novaLoja)
+            composable(
+                route = Routes.STORE_REGISTRATION,
+                arguments = listOf(
+                    navArgument(Routes.STORE_ID_ARG) {
+                        type = NavType.IntType
+                        defaultValue = -1
                     }
+                )
+            ) { entry ->
+                val storeId = entry.arguments?.getInt(Routes.STORE_ID_ARG)
+                val editingStore = lojas.firstOrNull { it.id == storeId }
 
-                    current = Destination.StoreList
-                }
-            )
+                StoreRegistrationScreen(
+                    modifier = contentModifier,
+                    lojaInicial = editingStore,
+                    onCancelar = {
+                        navController.popBackStack()
+                    },
+
+                    onSalvar = { loja ->
+                        val indice = lojas.indexOfFirst { it.id == loja.id }
+
+                        if (indice >= 0) {
+                            lojas[indice] = loja
+                        } else {
+                            val novaLoja = loja.copy(
+                                id = (lojas.maxOfOrNull { it.id } ?: 0) + 1
+                            )
+
+                            lojas.add(novaLoja)
+                        }
+
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 }
