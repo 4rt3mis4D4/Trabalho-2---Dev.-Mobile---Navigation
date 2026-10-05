@@ -54,21 +54,32 @@ enum class Destination(
     Dice("Dados", R.drawable.ic_dice),
     CharacterSheet("Ficha", R.drawable.ic_character_sheet),
     Playlist("Música", R.drawable.ic_playlist),
+
+    //Tela interna, não aparece na barra inferior
+    StoreRegistration("Criar Loja", R.drawable.ic_store),
     Items("Itens", R.drawable.icon_tools),
-    Store("Loja", R.drawable.icon_store)
+    Store("Loja", R.drawable.ic_store)
 }
 
 @Composable
 fun App() {
     var current by rememberSaveable { mutableStateOf(Destination.Dice) }
-    val itens = remember { mutableStateListOf<ItemRpg>() }
+    val lojas = remember {
+        mutableStateListOf<LojaRpg>()
+    }
+    var nomeLoja by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    val itens = remember {
+        mutableStateListOf<ItemRpg>()
+    }
 
     //   Destination.StoreRegistration -> StoreRegistrationScreen(
     //       modifier = contentModifier,
     //       onLojaSalva = salvarNomeLoja
     //   )
 
-    var nomeLoja by rememberSaveable { mutableStateOf("") }
     val salvarNomeLoja: (String) -> Unit = { novoNome ->
         nomeLoja = novoNome.trim()
         current = Destination.Store
@@ -79,40 +90,52 @@ fun App() {
         containerColor = corPretoPuro,
         bottomBar = {
             NavigationBar(containerColor = corCinzaEscuro) {
-                Destination.entries.forEach { destination ->
-                    NavigationBarItem(
-                        selected = current == destination,
-                        onClick = { current = destination },
-                        icon = {
-                            Icon(
-                                painter = painterResource(destination.iconRes),
-                                contentDescription = destination.label
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = destination.label,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = corBrancoPuro,
-                            selectedTextColor = corBrancoPuro,
+                Destination.entries
+                    .filter {
+                        it != Destination.StoreRegistration
+                    }
+                    .forEach { destination ->
+                        NavigationBarItem(
+                            selected = current == destination,
 
-                            indicatorColor = if (destination == Destination.Playlist || destination == Destination.Items){
-                                corMestreDestaque
-                            }else{
-                                corJogadorPrincipal
+                            onClick = {
+                                current = destination
                             },
-                            unselectedIconColor = corCinzaMedio,
-                            unselectedTextColor = corCinzaMedio,
-                        )
+                            icon = {
+                                Icon(
+                                    painter = painterResource(
+                                        destination.iconRes
+                                    ),
+                                    contentDescription = destination.label
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = destination.label,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            },
+                            colors =
+                                NavigationBarItemDefaults.colors(
+                                    selectedIconColor = corBrancoPuro,
+                                    selectedTextColor = corBrancoPuro,
+
+                                    indicatorColor = when(destination){
+                                        Destination.Playlist,
+                                        Destination.Items ->
+                                            corMestreDestaque
+                                        else ->
+                                            corJogadorPrincipal
+                                },
+                                unselectedIconColor = corCinzaMedio,
+                                unselectedTextColor = corCinzaMedio,
+                            )
                     )
                 }
-            }
         }
-    ) { innerPadding ->
+    }
+) { innerPadding ->
         val contentModifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
@@ -121,13 +144,31 @@ fun App() {
             Destination.Dice -> DiceScreen(contentModifier)
             Destination.CharacterSheet -> FichaPersonagemScreen(contentModifier)
             Destination.Playlist -> Playlist(contentModifier)
-            Destination.Items -> ItemRegistrationScreen(contentModifier, itens)
+            Destination.Items -> ItemRegistrationScreen(
+                contentModifier,
+                itens
+            )
             Destination.Store -> StoreScreen(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = innerPadding.calculateBottomPadding()),
+                modifier = contentModifier,
                 itens = itens,
                 nomeLoja = nomeLoja
+            )
+
+            Destination.StoreRegistration -> StoreRegistrationScreen(
+                modifier = contentModifier,
+                onCancelar = {
+                    current = Destination.Store
+                },
+
+                onSalvar = { loja ->
+                    //Gera o ID da nova loja
+                    val novaLoja = loja.copy(
+                        id = (lojas.maxOfOrNull { it.id } ?: 0) + 1
+                    )
+
+                    lojas.add(novaLoja)
+                }
+
             )
         }
     }
