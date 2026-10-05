@@ -70,21 +70,35 @@ object Routes {
     fun store(storeId: Int) = "store/$storeId"
     fun storeRegistration(storeId: Int? = null) =
         if (storeId == null) "store_registration" else "store_registration?$STORE_ID_ARG=$storeId"
+
+    const val ITEM_ID_ARG = "itemId"
+    //itemId is optional: missing means a new item is being created
+    const val ITEM_REGISTRATION = "item_registration?$ITEM_ID_ARG={$ITEM_ID_ARG}"
+
+    fun itemRegistration(itemId: Int? = null) =
+        if (itemId == null) "item_registration" else "item_registration?$ITEM_ID_ARG=$itemId"
 }
 
 enum class Destination(
     val label: String,
     @param:DrawableRes val iconRes: Int,
-    val route: String
+    val route: String,
+    //Screens opened from this tab, not shown in the bottom bar; they keep the tab selected
+    val internalRoutes: Set<String> = emptySet()
 ) {
     Dice("Dados", R.drawable.ic_dice, Routes.DICE),
     CharacterSheet("Ficha", R.drawable.ic_character_sheet, Routes.CHARACTER_SHEET),
     Playlist("Música", R.drawable.ic_playlist, Routes.PLAYLIST),
-    Items("Itens", R.drawable.icon_tools, Routes.ITEMS),
-    StoreList("Lojas", R.drawable.ic_store, Routes.STORE_LIST)
-}
+    Items("Itens", R.drawable.icon_tools, Routes.ITEMS, setOf(Routes.ITEM_REGISTRATION)),
+    StoreList(
+        "Lojas",
+        R.drawable.ic_store,
+        Routes.STORE_LIST,
+        setOf(Routes.STORE, Routes.STORE_REGISTRATION)
+    );
 
-private val storeInternalRoutes = setOf(Routes.STORE, Routes.STORE_REGISTRATION)
+    fun isSelected(route: String?) = route == this.route || route in internalRoutes
+}
 
 enum class Mode(
     val label: String,
@@ -123,6 +137,8 @@ fun App() {
 
     val routeStoreId = backStackEntry?.arguments?.getInt(Routes.STORE_ID_ARG)
     val routeStore = lojas.firstOrNull { it.id == routeStoreId }
+    val routeItemId = backStackEntry?.arguments?.getInt(Routes.ITEM_ID_ARG)
+    val routeItem = itens.firstOrNull { it.id == routeItemId }
     val tab = Destination.entries.firstOrNull { it.route == currentRoute }
 
     val palette = mode.palette
@@ -136,6 +152,7 @@ fun App() {
                     title = when (currentRoute) {
                         Routes.STORE -> routeStore?.nome ?: "Loja"
                         Routes.STORE_REGISTRATION -> if (routeStore == null) "Criar Loja" else "Editar Loja"
+                        Routes.ITEM_REGISTRATION -> if (routeItem == null) "Criar Item" else "Editar Item"
                         else -> tab?.label.orEmpty()
                     },
                     subtitle = if (currentRoute == Routes.STORE) {
@@ -154,8 +171,7 @@ fun App() {
                 NavigationBar(containerColor = corCinzaEscuro) {
                     mode.tabs.forEach { destination ->
                         NavigationBarItem(
-                            selected = currentRoute == destination.route ||
-                                (destination == Destination.StoreList && currentRoute in storeInternalRoutes),
+                            selected = destination.isSelected(currentRoute),
                             onClick = { navController.navigateToTab(destination.route) },
                             icon = {
                                 Icon(
@@ -186,8 +202,7 @@ fun App() {
                         onClick = {
                             val newMode = mode.other
                             user = user.copy(mode = newMode)
-                            val stillAvailable = newMode.tabs.any { it.route == currentRoute } ||
-                                currentRoute in storeInternalRoutes
+                            val stillAvailable = newMode.tabs.any { it.isSelected(currentRoute) }
                             if (newMode == Mode.Player && currentRoute == Routes.STORE_REGISTRATION) {
                                 //Creating/editing stores is master-only: go back to the store list
                                 navController.popBackStack(Routes.STORE_LIST, inclusive = false)
@@ -227,7 +242,53 @@ fun App() {
                 composable(Routes.DICE) { DiceScreen(contentModifier) }
                 composable(Routes.CHARACTER_SHEET) { FichaPersonagemScreen(contentModifier) }
                 composable(Routes.PLAYLIST) { Playlist(contentModifier) }
-                composable(Routes.ITEMS) { ItemRegistrationScreen(contentModifier, itens) }
+
+                composable(Routes.ITEMS) {
+                    ItemListScreen(
+                        modifier = contentModifier,
+                        items = itens,
+                        //No item details screen yet: opening an item edits it
+                        onItemClick = { item ->
+                            navController.navigate(Routes.itemRegistration(item.id))
+                        },
+                        onAdd = {
+                            navController.navigate(Routes.itemRegistration())
+                        },
+                        onEdit = { item ->
+                            navController.navigate(Routes.itemRegistration(item.id))
+                        },
+                        onDelete = { item ->
+                            itens.removeAll { it.id == item.id }
+                        }
+                    )
+                }
+
+                composable(
+                    route = Routes.ITEM_REGISTRATION,
+                    arguments = listOf(
+                        navArgument(Routes.ITEM_ID_ARG) {
+                            type = NavType.IntType
+                            defaultValue = -1
+                        }
+                    )
+                ) { entry ->
+                    val itemId = entry.arguments?.getInt(Routes.ITEM_ID_ARG)
+                    val editingItem = itens.firstOrNull { it.id == itemId }
+
+                    ItemRegistrationScreen(
+                        modifier = contentModifier,
+                        initialItem = editingItem,
+                        onSave = { item ->
+                            val index = itens.indexOfFirst { it.id == item.id }
+                            if (index >= 0) {
+                                itens[index] = item
+                            } else {
+                                itens.add(item.copy(id = (itens.maxOfOrNull { it.id } ?: 0) + 1))
+                            }
+                            navController.popBackStack()
+                        }
+                    )
+                }
 
                 composable(Routes.STORE_LIST) {
                     StoreListScreen(
