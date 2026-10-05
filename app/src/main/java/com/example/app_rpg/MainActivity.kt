@@ -14,6 +14,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,11 +35,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.app_rpg.ui.theme.App_rpgTheme
+import com.example.app_rpg.ui.theme.LocalModePalette
+import com.example.app_rpg.ui.theme.MasterPalette
+import com.example.app_rpg.ui.theme.ModePalette
+import com.example.app_rpg.ui.theme.PlayerPalette
 import com.example.app_rpg.ui.theme.corBrancoPuro
 import com.example.app_rpg.ui.theme.corCinzaEscuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
-import com.example.app_rpg.ui.theme.corJogadorPrincipal
-import com.example.app_rpg.ui.theme.corMestreDestaque
 import com.example.app_rpg.ui.theme.corPretoPuro
 
 class MainActivity : ComponentActivity() {
@@ -90,6 +93,9 @@ enum class Mode(
     Player("Jogador", listOf(Destination.Dice, Destination.CharacterSheet, Destination.StoreList)),
     Master("Mestre", listOf(Destination.Playlist, Destination.Items, Destination.StoreList));
 
+    val palette: ModePalette
+        get() = if (this == Player) PlayerPalette else MasterPalette
+
     val other: Mode
         get() = if (this == Player) Master else Player
 }
@@ -112,10 +118,6 @@ fun App() {
 
     var user by rememberSaveable { mutableStateOf(User()) }
     val mode = user.mode
-    val modeColor = when (mode) {
-        Mode.Master -> corMestreDestaque
-        Mode.Player -> corJogadorPrincipal
-    }
     val lojas = remember { mutableStateListOf<LojaRpg>() }
     val itens = remember { mutableStateListOf<ItemRpg>() }
 
@@ -123,167 +125,173 @@ fun App() {
     val routeStore = lojas.firstOrNull { it.id == routeStoreId }
     val tab = Destination.entries.firstOrNull { it.route == currentRoute }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = corPretoPuro,
-        topBar = {
-            AppTopBar(
-                title = when (currentRoute) {
-                    Routes.STORE -> routeStore?.nome ?: "Loja"
-                    Routes.STORE_REGISTRATION -> if (routeStore == null) "Criar Loja" else "Editar Loja"
-                    else -> tab?.label.orEmpty()
-                },
-                mode = if (currentRoute == Routes.STORE) Mode.Player else mode,
-                subtitle = if (currentRoute == Routes.STORE) {
-                    if (itens.size == 1) "1 item à venda" else "${itens.size} itens à venda"
-                } else {
-                    null
-                },
-                onBack = if (tab == null) {
-                    { navController.popBackStack() }
-                } else {
-                    null
-                }
-            )
-        },
-        bottomBar = {
-            NavigationBar(containerColor = corCinzaEscuro) {
-                mode.tabs.forEach { destination ->
+    val palette = mode.palette
+
+    CompositionLocalProvider(LocalModePalette provides palette) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = corPretoPuro,
+            topBar = {
+                AppTopBar(
+                    title = when (currentRoute) {
+                        Routes.STORE -> routeStore?.nome ?: "Loja"
+                        Routes.STORE_REGISTRATION -> if (routeStore == null) "Criar Loja" else "Editar Loja"
+                        else -> tab?.label.orEmpty()
+                    },
+                    subtitle = if (currentRoute == Routes.STORE) {
+                        if (itens.size == 1) "1 item à venda" else "${itens.size} itens à venda"
+                    } else {
+                        null
+                    },
+                    onBack = if (tab == null) {
+                        { navController.popBackStack() }
+                    } else {
+                        null
+                    }
+                )
+            },
+            bottomBar = {
+                NavigationBar(containerColor = corCinzaEscuro) {
+                    mode.tabs.forEach { destination ->
+                        NavigationBarItem(
+                            selected = currentRoute == destination.route ||
+                                (destination == Destination.StoreList && currentRoute in storeInternalRoutes),
+                            onClick = { navController.navigateToTab(destination.route) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(destination.iconRes),
+                                    contentDescription = destination.label
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = destination.label,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = corBrancoPuro,
+                                selectedTextColor = corBrancoPuro,
+                                indicatorColor = palette.accent,
+                                unselectedIconColor = corCinzaMedio,
+                                unselectedTextColor = corCinzaMedio,
+                            )
+                        )
+                    }
+
+                    //Toggles between Player and Master mode
                     NavigationBarItem(
-                        selected = currentRoute == destination.route ||
-                            (destination == Destination.StoreList && currentRoute in storeInternalRoutes),
-                        onClick = { navController.navigateToTab(destination.route) },
+                        selected = false,
+                        onClick = {
+                            val newMode = mode.other
+                            user = user.copy(mode = newMode)
+                            val stillAvailable = newMode.tabs.any { it.route == currentRoute } ||
+                                currentRoute in storeInternalRoutes
+                            if (newMode == Mode.Player && currentRoute == Routes.STORE_REGISTRATION) {
+                                //Creating/editing stores is master-only: go back to the store list
+                                navController.popBackStack(Routes.STORE_LIST, inclusive = false)
+                            } else if (!stillAvailable) {
+                                navController.navigateToTab(newMode.tabs.first().route)
+                            }
+                        },
                         icon = {
                             Icon(
-                                painter = painterResource(destination.iconRes),
-                                contentDescription = destination.label
+                                painter = painterResource(R.drawable.icon_swap),
+                                contentDescription = "Alternar para modo ${mode.other.label}"
                             )
                         },
                         label = {
                             Text(
-                                text = destination.label,
+                                text = mode.label,
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Bold
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = corBrancoPuro,
-                            selectedTextColor = corBrancoPuro,
-                            indicatorColor = modeColor,
-                            unselectedIconColor = corCinzaMedio,
-                            unselectedTextColor = corCinzaMedio,
+                            unselectedIconColor = palette.accent,
+                            unselectedTextColor = palette.accent,
                         )
                     )
                 }
-
-                //Toggles between Player and Master mode
-                NavigationBarItem(
-                    selected = false,
-                    onClick = {
-                        val newMode = mode.other
-                        user = user.copy(mode = newMode)
-                        val stillAvailable = newMode.tabs.any { it.route == currentRoute } ||
-                            currentRoute in storeInternalRoutes
-                        if (!stillAvailable) {
-                            navController.navigateToTab(newMode.tabs.first().route)
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            painter = painterResource(R.drawable.icon_swap),
-                            contentDescription = "Alternar para modo ${mode.other.label}"
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = mode.label,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        unselectedIconColor = modeColor,
-                        unselectedTextColor = modeColor,
-                    )
-                )
             }
-        }
-    ) { innerPadding ->
-        val contentModifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)
+        ) { innerPadding ->
+            val contentModifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
 
-        NavHost(
-            navController = navController,
-            startDestination = Routes.DICE
-        ) {
-            composable(Routes.DICE) { DiceScreen(contentModifier) }
-            composable(Routes.CHARACTER_SHEET) { FichaPersonagemScreen(contentModifier) }
-            composable(Routes.PLAYLIST) { Playlist(contentModifier) }
-            composable(Routes.ITEMS) { ItemRegistrationScreen(contentModifier, itens) }
-
-            composable(Routes.STORE_LIST) {
-                StoreListScreen(
-                    modifier = contentModifier,
-                    lojas = lojas,
-                    isMaster = mode == Mode.Master,
-                    onLojaClick = { loja ->
-                        navController.navigate(Routes.store(loja.id))
-                    },
-                    onAdicionar = {
-                        navController.navigate(Routes.storeRegistration())
-                    },
-                    onEditar = { loja ->
-                        navController.navigate(Routes.storeRegistration(loja.id))
-                    },
-                    onExcluir = { loja ->
-                        lojas.removeAll { it.id == loja.id }
-                    },
-                    onToggleVisibility = { loja ->
-                        val indice = lojas.indexOfFirst { it.id == loja.id }
-                        if (indice >= 0) {
-                            lojas[indice] = loja.copy(visivel = !loja.visivel)
-                        }
-                    }
-                )
-            }
-
-            composable(
-                route = Routes.STORE,
-                arguments = listOf(navArgument(Routes.STORE_ID_ARG) { type = NavType.IntType })
+            NavHost(
+                navController = navController,
+                startDestination = Routes.DICE
             ) {
-                StoreScreen(
-                    modifier = contentModifier,
-                    itens = itens
-                )
-            }
+                composable(Routes.DICE) { DiceScreen(contentModifier) }
+                composable(Routes.CHARACTER_SHEET) { FichaPersonagemScreen(contentModifier) }
+                composable(Routes.PLAYLIST) { Playlist(contentModifier) }
+                composable(Routes.ITEMS) { ItemRegistrationScreen(contentModifier, itens) }
 
-            composable(
-                route = Routes.STORE_REGISTRATION,
-                arguments = listOf(
-                    navArgument(Routes.STORE_ID_ARG) {
-                        type = NavType.IntType
-                        defaultValue = -1
-                    }
-                )
-            ) { entry ->
-                val storeId = entry.arguments?.getInt(Routes.STORE_ID_ARG)
-                val editingStore = lojas.firstOrNull { it.id == storeId }
-
-                StoreRegistrationScreen(
-                    modifier = contentModifier,
-                    lojaInicial = editingStore,
-                    onCancelar = { navController.popBackStack() },
-                    onSalvar = { loja ->
-                        val indice = lojas.indexOfFirst { it.id == loja.id }
-                        if (indice >= 0) {
-                            lojas[indice] = loja
-                        } else {
-                            lojas.add(loja.copy(id = (lojas.maxOfOrNull { it.id } ?: 0) + 1))
+                composable(Routes.STORE_LIST) {
+                    StoreListScreen(
+                        modifier = contentModifier,
+                        lojas = lojas,
+                        isMaster = mode == Mode.Master,
+                        onLojaClick = { loja ->
+                            navController.navigate(Routes.store(loja.id))
+                        },
+                        onAdicionar = {
+                            navController.navigate(Routes.storeRegistration())
+                        },
+                        onEditar = { loja ->
+                            navController.navigate(Routes.storeRegistration(loja.id))
+                        },
+                        onExcluir = { loja ->
+                            lojas.removeAll { it.id == loja.id }
+                        },
+                        onToggleVisibility = { loja ->
+                            val indice = lojas.indexOfFirst { it.id == loja.id }
+                            if (indice >= 0) {
+                                lojas[indice] = loja.copy(visivel = !loja.visivel)
+                            }
                         }
-                        navController.popBackStack()
-                    }
-                )
+                    )
+                }
+
+                composable(
+                    route = Routes.STORE,
+                    arguments = listOf(navArgument(Routes.STORE_ID_ARG) { type = NavType.IntType })
+                ) {
+                    StoreScreen(
+                        modifier = contentModifier,
+                        itens = itens
+                    )
+                }
+
+                composable(
+                    route = Routes.STORE_REGISTRATION,
+                    arguments = listOf(
+                        navArgument(Routes.STORE_ID_ARG) {
+                            type = NavType.IntType
+                            defaultValue = -1
+                        }
+                    )
+                ) { entry ->
+                    val storeId = entry.arguments?.getInt(Routes.STORE_ID_ARG)
+                    val editingStore = lojas.firstOrNull { it.id == storeId }
+
+                    StoreRegistrationScreen(
+                        modifier = contentModifier,
+                        lojaInicial = editingStore,
+                        onCancelar = { navController.popBackStack() },
+                        onSalvar = { loja ->
+                            val indice = lojas.indexOfFirst { it.id == loja.id }
+                            if (indice >= 0) {
+                                lojas[indice] = loja
+                            } else {
+                                lojas.add(loja.copy(id = (lojas.maxOfOrNull { it.id } ?: 0) + 1))
+                            }
+                            navController.popBackStack()
+                        }
+                    )
+                }
             }
         }
     }

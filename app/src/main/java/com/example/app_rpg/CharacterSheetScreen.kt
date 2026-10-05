@@ -30,11 +30,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.app_rpg.ui.theme.LocalModePalette
 import com.example.app_rpg.ui.theme.corBrancoOffWhite
 import com.example.app_rpg.ui.theme.corBrancoPuro
 import com.example.app_rpg.ui.theme.corCinzaEscuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
-import com.example.app_rpg.ui.theme.corJogadorPrincipal
 import com.example.app_rpg.ui.theme.corPretoPuro
 
 
@@ -204,6 +204,8 @@ fun PericiaSection() {
 
 @Composable
 fun BotoesAcaoSection() {
+    val palette = LocalModePalette.current
+    
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -233,7 +235,7 @@ fun BotoesAcaoSection() {
                 .height(52.dp),
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(
-                containerColor = corJogadorPrincipal,
+                containerColor = palette.accent,
                 contentColor = corBrancoPuro
             )
         ) {
@@ -335,8 +337,9 @@ fun CardStatus(valor: String, label: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun LinhaPericia(proficiencia: Int, bonus: Int, nome: String) {
+    val palette = LocalModePalette.current
     val corIndicador = when {
-        proficiencia >= 2 -> corJogadorPrincipal
+        proficiencia >= 2 -> palette.accent
         proficiencia == 1 -> corCinzaMedio
         else -> corCinzaEscuro.copy(alpha = 0.5f)
     }

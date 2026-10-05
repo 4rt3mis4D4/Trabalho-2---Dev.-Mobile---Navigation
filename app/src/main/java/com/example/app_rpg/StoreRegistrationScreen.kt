@@ -36,12 +36,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.app_rpg.ui.theme.LocalModePalette
 import com.example.app_rpg.ui.theme.corBrancoOffWhite
 import com.example.app_rpg.ui.theme.corBrancoPuro
 import com.example.app_rpg.ui.theme.corCinzaEscuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
-import com.example.app_rpg.ui.theme.corMestreDestaque
-import com.example.app_rpg.ui.theme.corMestrePrincipal
 import com.example.app_rpg.ui.theme.corPretoPuro
 
 data class LojaRpg(
@@ -59,6 +58,7 @@ fun StoreRegistrationScreen(
     onCancelar: () -> Unit = {},
     onSalvar: (LojaRpg) -> Unit = {}
 ) {
+    val palette = LocalModePalette.current
     val context = LocalContext.current
 
     var nome by rememberSaveable {
@@ -120,7 +120,7 @@ fun StoreRegistrationScreen(
                 if (errorName) {
                     Text(
                         text = "Informe o nome da loja.",
-                        color = corMestreDestaque
+                        color = palette.soft
                     )
                 }
             },
@@ -130,9 +130,9 @@ fun StoreRegistrationScreen(
                 unfocusedContainerColor = corCinzaEscuro,
                 focusedTextColor = corBrancoPuro,
                 unfocusedTextColor = corBrancoOffWhite,
-                focusedIndicatorColor = corMestreDestaque,
+                focusedIndicatorColor = palette.accent,
                 unfocusedIndicatorColor = corCinzaMedio,
-                cursorColor = corMestreDestaque
+                cursorColor = palette.accent
             ),
             shape = RoundedCornerShape(10.dp)
         )
@@ -169,7 +169,7 @@ fun StoreRegistrationScreen(
 
             Text(
                 text = "Imagem carregada",
-                color = corMestreDestaque,
+                color = palette.soft,
                 fontSize = 12.sp
             )
         }
@@ -200,9 +200,9 @@ fun StoreRegistrationScreen(
                 unfocusedContainerColor = corCinzaEscuro,
                 focusedTextColor = corBrancoOffWhite,
                 unfocusedTextColor = corBrancoOffWhite,
-                focusedIndicatorColor = corMestrePrincipal,
+                focusedIndicatorColor = palette.strong,
                 unfocusedIndicatorColor = corCinzaMedio,
-                cursorColor = corMestreDestaque
+                cursorColor = palette.accent
             ),
             shape = RoundedCornerShape(10.dp)
         )
@@ -219,7 +219,7 @@ fun StoreRegistrationScreen(
                     visivel = it
                 },
                 colors = CheckboxDefaults.colors(
-                    checkedColor = corMestrePrincipal,
+                    checkedColor = palette.strong,
                     uncheckedColor = corCinzaMedio,
                     checkmarkColor = corBrancoPuro
                 )
@@ -255,7 +255,7 @@ fun StoreRegistrationScreen(
                     .height(52.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = corMestreDestaque
+                    contentColor = palette.accent
                 )
             ) {
                 Text(
@@ -291,7 +291,7 @@ fun StoreRegistrationScreen(
                     .weight(1f)
                     .height(52.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = corMestreDestaque,
+                    containerColor = palette.accent,
                     contentColor = corBrancoPuro
                 ),
                 shape = RoundedCornerShape(10.dp)

@@ -43,14 +43,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.app_rpg.ui.theme.LocalModePalette
 import com.example.app_rpg.ui.theme.App_rpgTheme
 import com.example.app_rpg.ui.theme.corBrancoOffWhite
 import com.example.app_rpg.ui.theme.corBrancoPuro
 import com.example.app_rpg.ui.theme.corCinzaEscuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
-import com.example.app_rpg.ui.theme.corMestreDestaque
-import com.example.app_rpg.ui.theme.corMestrePrincipal
-import com.example.app_rpg.ui.theme.corMestreSombra
 import com.example.app_rpg.ui.theme.corPretoPuro
 
 @Composable
@@ -65,6 +63,7 @@ fun StoreListScreen(
     onExcluir: (LojaRpg) -> Unit = {},
     onToggleVisibility: (LojaRpg) -> Unit = {}
 ) {
+    val palette = LocalModePalette.current
     val context = LocalContext.current
 
     val displayedStores = if (isMaster) lojas else lojas.filter { it.visivel }
@@ -127,7 +126,7 @@ fun StoreListScreen(
                     .align(Alignment.BottomEnd)
                     .padding(20.dp),
                 shape = CircleShape,
-                containerColor = corMestreDestaque,
+                containerColor = palette.accent,
                 contentColor = corBrancoPuro
             ) {
                 Icon(
@@ -158,7 +157,7 @@ fun StoreListScreen(
                         lojaParaExcluir = null
                     }
                 ) {
-                    Text("EXCLUIR", color = corMestreDestaque, fontWeight = FontWeight.Bold)
+                    Text("EXCLUIR", color = palette.accent, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -179,12 +178,13 @@ private fun LojaCard(
     onExcluir: () -> Unit,
     onToggleVisibility: () -> Unit
 ) {
+    val palette = LocalModePalette.current
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = corMestreSombra),
-        border = BorderStroke(1.dp, if (loja.visivel) corMestrePrincipal else corCinzaMedio)
+        colors = CardDefaults.cardColors(containerColor = palette.surface),
+        border = BorderStroke(1.dp, if (loja.visivel) palette.strong else corCinzaMedio)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -203,7 +203,7 @@ private fun LojaCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(corMestrePrincipal)
+                        .background(palette.strong)
                         .padding(horizontal = 14.dp, vertical = 4.dp)
                 ) {
                     Text(
@@ -233,7 +233,7 @@ private fun LojaCard(
                     onClick = onEditar,
                     modifier = Modifier.size(36.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = corMestrePrincipal,
+                        containerColor = palette.strong,
                         contentColor = corBrancoPuro
                     )
                 ) {
@@ -249,7 +249,7 @@ private fun LojaCard(
                     modifier = Modifier.size(36.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = corCinzaEscuro,
-                        contentColor = corMestreDestaque
+                        contentColor = palette.accent
                     )
                 ) {
                     Icon(
@@ -265,11 +265,12 @@ private fun LojaCard(
 
 @Composable
 private fun AvatarLoja(visivel: Boolean, onClick: (() -> Unit)? = null) {
+    val palette = LocalModePalette.current
     Box(
         modifier = Modifier
             .size(72.dp)
             .clip(CircleShape)
-            .background(if (visivel) corMestrePrincipal else corCinzaEscuro)
+            .background(if (visivel) palette.strong else corCinzaEscuro)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(

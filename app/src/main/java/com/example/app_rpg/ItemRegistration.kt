@@ -55,14 +55,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.app_rpg.ui.theme.LocalModePalette
 import com.example.app_rpg.ui.theme.App_rpgTheme
 import com.example.app_rpg.ui.theme.corBrancoOffWhite
 import com.example.app_rpg.ui.theme.corBrancoPuro
 import com.example.app_rpg.ui.theme.corCinzaEscuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
-import com.example.app_rpg.ui.theme.corMestreDestaque
-import com.example.app_rpg.ui.theme.corMestrePrincipal
-import com.example.app_rpg.ui.theme.corMestreSombra
 import com.example.app_rpg.ui.theme.corPretoPuro
 
 private const val MESSAGE_SUCESS = "Item adicionado com sucesso"
@@ -74,6 +72,7 @@ fun ItemRegistrationScreen(
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
+    val palette = LocalModePalette.current
 
     var nome by rememberSaveable { mutableStateOf("") }
     var valor by rememberSaveable { mutableStateOf("") }
@@ -135,8 +134,8 @@ fun ItemRegistrationScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = corMestreSombra),
-            border = BorderStroke(1.dp, corMestrePrincipal)
+            colors = CardDefaults.cardColors(containerColor = palette.surface),
+            border = BorderStroke(1.dp, palette.strong)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -183,7 +182,7 @@ fun ItemRegistrationScreen(
                 .fillMaxWidth()
                 .height(52.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = corMestreDestaque,
+                containerColor = palette.accent,
                 contentColor = corBrancoPuro
             )
         ) {
@@ -207,6 +206,8 @@ private fun SelectCategory(
     selecionada: Int,
     onSelecionar: (Int) -> Unit
 ) {
+    val palette = LocalModePalette.current
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -231,10 +232,10 @@ private fun SelectCategory(
                     modifier = Modifier
                         .size(56.dp)
                         .clip(CircleShape)
-                        .background(if (ativa) corMestrePrincipal else corCinzaEscuro)
+                        .background(if (ativa) palette.strong else corCinzaEscuro)
                         .border(
                             width = 2.dp,
-                            color = if (ativa) corMestreDestaque else Color.Transparent,
+                            color = if (ativa) palette.accent else Color.Transparent,
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
@@ -275,6 +276,8 @@ private fun RegistrationField(
     minLines: Int = 1,
     maxLines: Int = 1
 ) {
+    val palette = LocalModePalette.current
+    
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -301,13 +304,13 @@ private fun RegistrationField(
             unfocusedTextColor = corBrancoPuro,
             focusedContainerColor = corCinzaEscuro,
             unfocusedContainerColor = corCinzaEscuro,
-            focusedBorderColor = corMestreDestaque,
-            unfocusedBorderColor = corMestrePrincipal,
-            focusedLabelColor = corMestreDestaque,
+            focusedBorderColor = palette.accent,
+            unfocusedBorderColor = palette.strong,
+            focusedLabelColor = palette.accent,
             unfocusedLabelColor = corCinzaMedio,
-            focusedLeadingIconColor = corMestreDestaque,
+            focusedLeadingIconColor = palette.accent,
             unfocusedLeadingIconColor = corCinzaMedio,
-            cursorColor = corMestreDestaque
+            cursorColor = palette.accent
         )
     )
 }

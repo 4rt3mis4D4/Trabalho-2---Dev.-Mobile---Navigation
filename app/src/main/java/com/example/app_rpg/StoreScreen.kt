@@ -33,12 +33,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.app_rpg.ui.theme.LocalModePalette
 import com.example.app_rpg.ui.theme.corBrancoOffWhite
 import com.example.app_rpg.ui.theme.corBrancoPuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
-import com.example.app_rpg.ui.theme.corJogadorDestaque
-import com.example.app_rpg.ui.theme.corJogadorEscuro
-import com.example.app_rpg.ui.theme.corJogadorPrincipal
 import com.example.app_rpg.ui.theme.corPretoPuro
 
 private const val MESSAGE_BUY = "Compra efetuada com sucesso!"
@@ -98,12 +96,14 @@ private fun ItemCard(
     onClick: () -> Unit,
     onComprar: () -> Unit
 ) {
+    val palette = LocalModePalette.current
+    
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = corJogadorEscuro),
-        border = BorderStroke(1.dp, corJogadorPrincipal)
+        colors = CardDefaults.cardColors(containerColor = palette.surface),
+        border = BorderStroke(1.dp, palette.strong)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -114,7 +114,7 @@ private fun ItemCard(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
-                    .background(corJogadorPrincipal),
+                    .background(palette.strong),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -132,7 +132,7 @@ private fun ItemCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(corJogadorPrincipal)
+                        .background(palette.strong)
                         .padding(horizontal = 14.dp, vertical = 4.dp)
                 ) {
                     Text(
@@ -156,7 +156,7 @@ private fun ItemCard(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(corJogadorDestaque)
+                        .background(palette.soft)
                         .padding(horizontal = 10.dp, vertical = 3.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -164,12 +164,12 @@ private fun ItemCard(
                     Icon(
                         painter = painterResource(R.drawable.icon_money),
                         contentDescription = null,
-                        tint = corJogadorEscuro,
+                        tint = palette.surface,
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
                         text = item.itemValue.toString(),
-                        color = corJogadorEscuro,
+                        color = palette.surface,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1
@@ -180,7 +180,7 @@ private fun ItemCard(
             FilledIconButton(
                 onClick = onComprar,
                 colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = corJogadorPrincipal,
+                    containerColor = palette.accent,
                     contentColor = corBrancoPuro
                 )
             ) {

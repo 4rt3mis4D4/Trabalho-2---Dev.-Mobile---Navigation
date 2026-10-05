@@ -42,12 +42,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.app_rpg.ui.theme.LocalModePalette
 import com.example.app_rpg.ui.theme.corBrancoOffWhite
 import com.example.app_rpg.ui.theme.corBrancoPuro
 import com.example.app_rpg.ui.theme.corCinzaEscuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
-import com.example.app_rpg.ui.theme.corJogadorDestaque
-import com.example.app_rpg.ui.theme.corJogadorPrincipal
 import com.example.app_rpg.ui.theme.corPretoPuro
 
 
@@ -119,6 +118,8 @@ private fun ExpressionSection(
     error: String?,
     onSubmit: () -> Unit
 ) {
+    val palette = LocalModePalette.current
+    
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -142,13 +143,13 @@ private fun ExpressionSection(
                 errorIndicatorColor = Color.Transparent,
                 focusedTextColor = corBrancoOffWhite,
                 unfocusedTextColor = corBrancoOffWhite,
-                cursorColor = corJogadorPrincipal,
-                focusedLabelColor = corJogadorPrincipal,
+                cursorColor = palette.accent,
+                focusedLabelColor = palette.accent,
                 unfocusedLabelColor = corCinzaMedio,
                 focusedPlaceholderColor = corCinzaMedio,
                 unfocusedPlaceholderColor = corCinzaMedio,
-                errorLabelColor = corJogadorDestaque,
-                errorSupportingTextColor = corJogadorDestaque
+                errorLabelColor = palette.soft,
+                errorSupportingTextColor = palette.soft
             )
         )
 
@@ -158,7 +159,7 @@ private fun ExpressionSection(
             shape = RoundedCornerShape(50),
             contentPadding = PaddingValues(0.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = corJogadorPrincipal,
+                containerColor = palette.accent,
                 contentColor = corBrancoPuro
             )
         ) {
@@ -280,8 +281,8 @@ fun BarChart(
     data: List<Bar>,
     modifier: Modifier = Modifier,
     chartHeight: Dp = 120.dp,
-    barColor: Color = corJogadorPrincipal,
-    highlightColor: Color = corJogadorDestaque,
+    barColor: Color = LocalModePalette.current.accent,
+    highlightColor: Color = LocalModePalette.current.soft,
     formatValue: (Float) -> String = { "%.0f".format(it) }
 ) {
     if (data.isEmpty()) return

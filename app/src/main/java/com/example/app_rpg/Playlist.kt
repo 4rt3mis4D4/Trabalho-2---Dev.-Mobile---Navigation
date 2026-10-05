@@ -24,16 +24,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.app_rpg.ui.theme.LocalModePalette
 import com.example.app_rpg.ui.theme.corBrancoPuro
 import com.example.app_rpg.ui.theme.corCinzaEscuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
-import com.example.app_rpg.ui.theme.corMestreDestaque
 import com.example.app_rpg.ui.theme.corPretoPuro
 
 private val generos = listOf("Pop", "Rock", "MPB")
 
 @Composable
 fun Playlist(modifier: Modifier) {
+    val palette = LocalModePalette.current
+    
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -64,13 +66,12 @@ fun Playlist(modifier: Modifier) {
 
             Button(
                 onClick = {},
-                colors = ButtonDefaults.buttonColors(containerColor = corMestreDestaque)
+                colors = ButtonDefaults.buttonColors(containerColor = palette.accent)
             ) {
                 Text("🔍")
             }
         }
 
-        // Filtros de gêneros musicais
         Spacer(modifier = Modifier.height(30.dp))
 
         Row(
@@ -81,14 +82,13 @@ fun Playlist(modifier: Modifier) {
                 Button(
                     onClick = {},
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = corMestreDestaque)
+                    colors = ButtonDefaults.buttonColors(containerColor = palette.accent)
                 ) {
                     Text(genero)
                 }
             }
         }
 
-        //Espaço entre gêneros e lista de musicas
         Spacer(modifier = Modifier.height(30.dp))
 
         LazyColumn(
@@ -104,6 +104,8 @@ fun Playlist(modifier: Modifier) {
 
 @Composable
 private fun MusicaCard() {
+    val palette = LocalModePalette.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -115,11 +117,10 @@ private fun MusicaCard() {
                 .fillMaxSize()
                 .padding(20.dp)
         ) {
-            //Espaço da imagem
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .background(corMestreDestaque, shape = RoundedCornerShape(50.dp))
+                    .background(palette.soft, shape = RoundedCornerShape(50.dp))
             )
             Text(
                 text = "Nome da música",
