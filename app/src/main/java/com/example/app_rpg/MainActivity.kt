@@ -1,12 +1,10 @@
 package com.example.app_rpg
 
 import android.os.Bundle
-import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -18,16 +16,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.app_rpg.ui.theme.App_rpgTheme
 import com.example.app_rpg.ui.theme.corBrancoPuro
@@ -55,12 +53,26 @@ enum class Destination(
 ) {
     Dice("Dados", R.drawable.ic_dice),
     CharacterSheet("Ficha", R.drawable.ic_character_sheet),
-    Playlist("Música", R.drawable.ic_playlist)
+    Playlist("Música", R.drawable.ic_playlist),
+    Items("Itens", R.drawable.icon_tools),
+    Store("Loja", R.drawable.icon_store)
 }
 
 @Composable
 fun App() {
     var current by rememberSaveable { mutableStateOf(Destination.Dice) }
+    val itens = remember { mutableStateListOf<ItemRpg>() }
+
+    //   Destination.StoreRegistration -> StoreRegistrationScreen(
+    //       modifier = contentModifier,
+    //       onLojaSalva = salvarNomeLoja
+    //   )
+
+    var nomeLoja by rememberSaveable { mutableStateOf("") }
+    val salvarNomeLoja: (String) -> Unit = { novoNome ->
+        nomeLoja = novoNome.trim()
+        current = Destination.Store
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -88,7 +100,7 @@ fun App() {
                             selectedIconColor = corBrancoPuro,
                             selectedTextColor = corBrancoPuro,
 
-                            indicatorColor = if(destination == Destination.Playlist){
+                            indicatorColor = if (destination == Destination.Playlist || destination == Destination.Items){
                                 corMestreDestaque
                             }else{
                                 corJogadorPrincipal
@@ -109,6 +121,14 @@ fun App() {
             Destination.Dice -> DiceScreen(contentModifier)
             Destination.CharacterSheet -> FichaPersonagemScreen(contentModifier)
             Destination.Playlist -> Playlist(contentModifier)
+            Destination.Items -> ItemRegistrationScreen(contentModifier, itens)
+            Destination.Store -> StoreScreen(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = innerPadding.calculateBottomPadding()),
+                itens = itens,
+                nomeLoja = nomeLoja
+            )
         }
     }
 }
