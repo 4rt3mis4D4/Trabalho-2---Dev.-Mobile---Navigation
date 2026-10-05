@@ -71,7 +71,6 @@ private const val MESSAGE_SUCESS = "Item adicionado com sucesso"
 fun ItemRegistrationScreen(
     modifier: Modifier = Modifier,
     itens: SnapshotStateList<ItemRpg>,
-    nomeLoja: String = "NOME DA LOJA"
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -162,7 +161,7 @@ fun ItemRegistrationScreen(
                         value = valor,
                         onValueChange = { novo -> valor = novo.filter { it.isDigit() }.take(9) },
                         label = "Valor do item",
-                        iconeRes = R.drawable.money_bag_24dp_e3e3e3_fill0_wght400_grad0_opsz24,
+                        iconeRes = R.drawable.icon_money,
                         isError = valorInvalido,
                         mensagemErro = "Informe o valor do item",
                         keyboardOptions = KeyboardOptions(
@@ -175,7 +174,7 @@ fun ItemRegistrationScreen(
                         value = descricao,
                         onValueChange = { descricao = it },
                         label = "Descrição do item",
-                        iconeRes = R.drawable.edit_24dp_e3e3e3_fill0_wght400_grad0_opsz24,
+                        iconeRes = R.drawable.icon_edit,
                         shape = RoundedCornerShape(24.dp),
                         minLines = 3,
                         maxLines = 5
@@ -194,7 +193,7 @@ fun ItemRegistrationScreen(
                 )
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.add_24dp_e3e3e3_fill0_wght400_grad0_opsz24),
+                    painter = painterResource(R.drawable.icon_add),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )

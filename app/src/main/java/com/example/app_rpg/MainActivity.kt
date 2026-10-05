@@ -54,13 +54,25 @@ enum class Destination(
     Dice("Dados", R.drawable.ic_dice),
     CharacterSheet("Ficha", R.drawable.ic_character_sheet),
     Playlist("Música", R.drawable.ic_playlist),
-    Items("Itens", R.drawable.business_center_24dp_e3e3e3_fill0_wght400_grad0_opsz24)
+    Items("Itens", R.drawable.icon_tools),
+    Store("Loja", R.drawable.icon_store)
 }
 
 @Composable
 fun App() {
     var current by rememberSaveable { mutableStateOf(Destination.Dice) }
     val itens = remember { mutableStateListOf<ItemRpg>() }
+
+    //   Destination.StoreRegistration -> StoreRegistrationScreen(
+    //       modifier = contentModifier,
+    //       onLojaSalva = salvarNomeLoja
+    //   )
+
+    var nomeLoja by rememberSaveable { mutableStateOf("") }
+    val salvarNomeLoja: (String) -> Unit = { novoNome ->
+        nomeLoja = novoNome.trim()
+        current = Destination.Store
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -110,6 +122,13 @@ fun App() {
             Destination.CharacterSheet -> FichaPersonagemScreen(contentModifier)
             Destination.Playlist -> Playlist(contentModifier)
             Destination.Items -> ItemRegistrationScreen(contentModifier, itens)
+            Destination.Store -> StoreScreen(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = innerPadding.calculateBottomPadding()),
+                itens = itens,
+                nomeLoja = nomeLoja
+            )
         }
     }
 }

@@ -16,9 +16,9 @@ data class ItemRpg(
 )
 
 val listCatItem = listOf(
-    itemCategory("Armas", R.drawable.swords_24dp_e3e3e3_fill0_wght400_grad0_opsz24),
-    itemCategory("Alimentos", R.drawable.restaurant_24dp_e3e3e3_fill0_wght400_grad0_opsz24),
-    itemCategory("Armaduras", R.drawable.shield_24dp_e3e3e3_fill0_wght400_grad0_opsz24),
-    itemCategory("Ferramentas", R.drawable.business_center_24dp_e3e3e3_fill0_wght400_grad0_opsz24),
-    itemCategory("Montarias", R.drawable.chess_knight_24dp_e3e3e3_fill0_wght400_grad0_opsz24)
+    itemCategory("Armas", R.drawable.icon_armament),
+    itemCategory("Alimentos", R.drawable.icon_food),
+    itemCategory("Armaduras", R.drawable.icon_armor),
+    itemCategory("Ferramentas", R.drawable.icon_tools),
+    itemCategory("Montarias", R.drawable.icon_mount)
 )
