@@ -6,6 +6,8 @@ Aplicativo Android desenvolvido com o objetivo de auxiliar e complementar sessõ
 >
 > Este projeto está sendo desenvolvido de forma contínua ao longo do curso de **Ciência da Computação**, acompanhando a evolução dos conhecimentos adquiridos durante a disciplina Desenvolvimento Mobile. Novas funcionalidades, melhorias de interface, correções e ajustes serão adicionados conforme o desenvolvimento do projeto avançar.
 
+📄 Processo de desenvolvimento e decisões do trio: **[PROCESSO.md](PROCESSO.md)**
+
 ## Sobre o projeto
 
 O **APP RPG** é um projeto acadêmico desenvolvido para colocar em prática conceitos de desenvolvimento de software e desenvolvimento mobile utilizando **Android Studio, Kotlin e Jetpack Compose**.
@@ -150,40 +152,44 @@ Dessa forma, o repositório também representa a evolução técnica do projeto 
 
 ### Pré-requisitos
 
-Para executar o projeto, recomenda-se ter instalado:
+* **Android Studio** atualizado (com suporte ao Android Gradle Plugin 9.3);
+* **JDK 17** ou superior (o Android Studio já inclui um);
+* **Android SDK** instalado pelo Android Studio;
+* Um **emulador** ou **dispositivo Android 7.0 (API 24)** ou superior.
 
-* Android Studio;
-* JDK compatível com a versão utilizada pelo projeto;
-* Android SDK;
-* Um dispositivo Android ou emulador.
-
-### Clonando o repositório
+### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/4rt3mis4D4/app_rpg.git
+git clone https://github.com/4rt3mis4D4/Trabalho-2---Dev.-Mobile---Navigation.git
+cd Trabalho-2---Dev.-Mobile---Navigation
 ```
 
-Entre na pasta:
+### 2. Executar pelo Android Studio
+
+1. Abra o Android Studio e escolha **File > Open**;
+2. Selecione a pasta `Trabalho-2---Dev.-Mobile---Navigation` que foi clonada;
+3. Aguarde a sincronização do Gradle terminar;
+4. Escolha um emulador ou conecte um dispositivo com a depuração USB ativada;
+5. Clique em **Run ▶** (ou `Shift + F10`).
+
+### 3. Executar pela linha de comando (opcional)
+
+Com um emulador aberto ou um dispositivo conectado:
 
 ```bash
-cd app_rpg
+# Linux / macOS
+chmod +x gradlew
+./gradlew installDebug
+
+# Windows
+gradlew.bat installDebug
 ```
 
-Abra o projeto no **Android Studio**, aguarde a sincronização do Gradle e execute a aplicação em um emulador ou dispositivo Android.
+Depois, abra o app **app_rpg** no dispositivo.
 
-## Controle de versão
+## Processo de desenvolvimento
 
-O desenvolvimento do projeto utiliza **Git** para controle de versão e **GitHub** para hospedagem do código-fonte.
-
-Os commits são utilizados para registrar a evolução das funcionalidades e alterações realizadas durante o desenvolvimento.
-
-Exemplo:
-
-```bash
-git add .
-git commit -m "feat: cria tela de músicas"
-git push
-```
+A história das decisões do trio, com prints de cada etapa, está em **[PROCESSO.md](PROCESSO.md)**.
 
 ## Autores
 

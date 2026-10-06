@@ -16,13 +16,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,34 +40,38 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.app_rpg.ui.theme.App_rpgTheme
 import com.example.app_rpg.ui.theme.LocalModePalette
+import com.example.app_rpg.ui.theme.MasterPalette
 import com.example.app_rpg.ui.theme.corBrancoOffWhite
 import com.example.app_rpg.ui.theme.corBrancoPuro
 import com.example.app_rpg.ui.theme.corCinzaEscuro
 import com.example.app_rpg.ui.theme.corCinzaMedio
 import com.example.app_rpg.ui.theme.corPretoPuro
 
-private const val MESSAGE_BUY = "Compra efetuada com sucesso!"
-
 @Composable
-fun StoreScreen(
+fun ItemListScreen(
     modifier: Modifier = Modifier,
-    descricao: String = "",
-    itens: List<ItemRpg>,
-    isMaster: Boolean = false,
+    items: List<ItemRpg>,
     onItemClick: (ItemRpg) -> Unit = {},
-    onRemoveItem: (ItemRpg) -> Unit = {}
+    onAdd: () -> Unit = {},
+    onEdit: (ItemRpg) -> Unit = {},
+    onDelete: (ItemRpg) -> Unit = {}
 ) {
+    val palette = LocalModePalette.current
     val context = LocalContext.current
+
+    var itemToDelete by remember { mutableStateOf<ItemRpg?>(null) }
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(corPretoPuro)
     ) {
-        if (itens.isEmpty()) {
+        if (items.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -66,11 +79,7 @@ fun StoreScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (isMaster) {
-                        "Nenhum item na loja ainda.\nEdite a loja para escolher os itens à venda."
-                    } else {
-                        "Esta loja não tem itens à venda."
-                    },
+                    text = "Nenhum item cadastrado ainda.\nToque em + para criar um item.",
                     color = corCinzaMedio,
                     fontSize = 16.sp,
                     textAlign = TextAlign.Center
@@ -79,48 +88,82 @@ fun StoreScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(20.dp),
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    top = 20.dp,
+                    end = 20.dp,
+                    bottom = 96.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                if (descricao.isNotBlank()) {
-                    item {
-                        Text(
-                            text = descricao,
-                            color = corBrancoOffWhite,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-
-                items(itens, key = { it.id }) { item ->
-                    ItemCard(
+                items(items, key = { it.id }) { item ->
+                    ItemListCard(
                         item = item,
-                        isMaster = isMaster,
                         onClick = { onItemClick(item) },
-                        onAction = {
-                            if (isMaster) {
-                                onRemoveItem(item)
-                                Toast.makeText(context, "${item.itemName} removido da loja", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, MESSAGE_BUY, Toast.LENGTH_SHORT).show()
-                            }
-                        }
+                        onEdit = { onEdit(item) },
+                        onDelete = { itemToDelete = item }
                     )
                 }
             }
         }
+
+        FloatingActionButton(
+            onClick = onAdd,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(20.dp),
+            shape = CircleShape,
+            containerColor = palette.accent,
+            contentColor = corBrancoPuro
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.icon_add),
+                contentDescription = "Criar item"
+            )
+        }
+    }
+
+    itemToDelete?.let { item ->
+        AlertDialog(
+            onDismissRequest = { itemToDelete = null },
+            containerColor = corCinzaEscuro,
+            titleContentColor = corBrancoPuro,
+            textContentColor = corBrancoOffWhite,
+            title = { Text("Excluir item") },
+            text = { Text("Tem certeza que deseja excluir o item \"${item.itemName}\"?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete(item)
+                        Toast.makeText(
+                            context,
+                            "Item ${item.itemName} excluído",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        itemToDelete = null
+                    }
+                ) {
+                    Text("EXCLUIR", color = palette.accent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { itemToDelete = null }) {
+                    Text("CANCELAR", color = corCinzaMedio, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 }
 
 @Composable
-private fun ItemCard(
+private fun ItemListCard(
     item: ItemRpg,
-    isMaster: Boolean,
     onClick: () -> Unit,
-    onAction: () -> Unit
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val palette = LocalModePalette.current
-    
+
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -172,6 +215,7 @@ private fun ItemCard(
                     text = item.itemDescription.ifBlank { "Sem descrição" },
                     color = corBrancoOffWhite,
                     fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -200,19 +244,58 @@ private fun ItemCard(
                 }
             }
 
-            FilledIconButton(
-                onClick = onAction,
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = if (isMaster) corCinzaEscuro else palette.accent,
-                    contentColor = if (isMaster) palette.accent else corBrancoPuro
-                )
-            ) {
-                Icon(
-                    painter = painterResource(if (isMaster) R.drawable.icon_delete else R.drawable.icon_coins),
-                    contentDescription = if (isMaster) "Remover ${item.itemName} da loja" else "Comprar ${item.itemName}",
-                    modifier = Modifier.size(if (isMaster) 22.dp else 28.dp)
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledIconButton(
+                    onClick = onEdit,
+                    modifier = Modifier.size(36.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = palette.strong,
+                        contentColor = corBrancoPuro
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.icon_edit),
+                        contentDescription = "Editar ${item.itemName}",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                FilledIconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(36.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = corCinzaEscuro,
+                        contentColor = palette.accent
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.icon_delete),
+                        contentDescription = "Excluir ${item.itemName}",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
+        }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun ItemListScreenPreview() {
+    val items = remember {
+        mutableStateListOf(
+            ItemRpg(1, "Espada Longa", 150, "Lâmina de aço temperado.", listCatItem[0]),
+            ItemRpg(2, "Pão de Viagem", 5, "", listCatItem[1]),
+            ItemRpg(3, "Cota de Malha", 300, "Proteção leve e resistente.", listCatItem[2])
+        )
+    }
+
+    App_rpgTheme {
+        CompositionLocalProvider(LocalModePalette provides MasterPalette) {
+            ItemListScreen(
+                items = items,
+                onDelete = { items.remove(it) }
+            )
         }
     }
 }
